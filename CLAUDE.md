@@ -2,6 +2,23 @@
 
 French-only PWA for one Flatshare of three Flatmates: Room Occupancy, Expenses, Recipes and Meal. Domain language in `GLOSSARY.md`, decisions in `docs/adr/`.
 
+## Commands
+
+- `npm run dev`: local dev server (needs `.env`, see `.env.example`)
+- `npm test`: Vitest suite
+- `npm run typecheck`: TypeScript check
+- `npm run build`: typecheck + production build
+- `scripts/setup-wizard.sh`: one-time human setup (Supabase project, accounts, Vercel). Run from the repo root.
+
+Deploy: Vercel builds `main` on every push. Database changes: SQL files in `supabase/migrations/`, run by hand in the Supabase SQL Editor.
+
+## Architecture
+
+- All server access goes through the `Backend` interface (`src/backend/Backend.ts`): `SupabaseBackend` in production, `InMemoryBackend` in tests. UI code never imports Supabase.
+- Live updates: `Backend.subscribe` reports a changed `Topic`; components read data through `useLive`, which reloads on that topic.
+- Time comes from the injected `Clock`, never `new Date()` in features.
+- Tests render the real `App` over `InMemoryBackend` and a controllable `Clock` (see `test/render.tsx`) and assert on what a Flatmate sees. No other test seam.
+
 ## Definition of Done
 
 - Update this CLAUDE.md if conventions, architecture, or commands change
