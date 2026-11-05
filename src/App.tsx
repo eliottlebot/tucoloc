@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { InvalidCredentialsError, type Backend, type Session } from './backend/Backend'
 import { useLive } from './useLive'
+import { Rooms } from './Rooms'
 import type { Clock } from './clock'
 
 type Props = { backend: Backend; clock: Clock }
 
-export function App({ backend }: Props) {
+export function App({ backend, clock }: Props) {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
 
   useEffect(() => {
@@ -17,6 +18,7 @@ export function App({ backend }: Props) {
   return (
     <Home
       backend={backend}
+      clock={clock}
       session={session}
       onLogout={async () => {
         await backend.logout()
@@ -60,7 +62,7 @@ function LoginScreen({ backend, onLogin }: { backend: Backend; onLogin: (s: Sess
 
 const TABS = ['Pièces', 'Dépenses', 'Repas'] as const
 
-function Home({ backend, session, onLogout }: { backend: Backend; session: Session; onLogout: () => void }) {
+function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: Clock; session: Session; onLogout: () => void }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>('Pièces')
   const flatmates = useLive(backend, 'flatmates', () => backend.listFlatmates())
   const me = flatmates?.find((f) => f.id === session.flatmate.id) ?? session.flatmate
@@ -77,7 +79,9 @@ function Home({ backend, session, onLogout }: { backend: Backend; session: Sessi
           </button>
         ))}
       </div>
-      <div role="tabpanel" aria-label={tab} />
+      <div role="tabpanel" aria-label={tab}>
+        {tab === 'Pièces' && <Rooms backend={backend} clock={clock} me={me} flatmates={flatmates} />}
+      </div>
     </div>
   )
 }
