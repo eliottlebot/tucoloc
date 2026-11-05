@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Flatmate, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
+import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type Flatmate, type NewExpense, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
 
-const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies' }
+const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses' }
 
 export class SupabaseBackend implements Backend {
   private client: SupabaseClient
@@ -49,6 +49,36 @@ export class SupabaseBackend implements Backend {
 
   async free(room: RoomId): Promise<void> {
     const { error } = await this.client.from('rooms').update({ flatmate_id: null, since: null }).eq('id', room)
+    if (error) throw error
+  }
+
+  async listExpenses(): Promise<Expense[]> {
+    const { data, error } = await this.client
+      .from('expenses')
+      .select('id, label, amount_cents, date, payer_id, participant_ids, creator_id, created_at')
+    if (error) throw error
+    return data.map((e) => ({
+      id: e.id,
+      label: e.label,
+      amountCents: e.amount_cents,
+      date: e.date,
+      payerId: e.payer_id,
+      participantIds: e.participant_ids,
+      creatorId: e.creator_id,
+      createdAt: new Date(e.created_at),
+    }))
+  }
+
+  async createExpense(expense: NewExpense): Promise<void> {
+    const { error } = await this.client.from('expenses').insert({
+      label: expense.label,
+      amount_cents: expense.amountCents,
+      date: expense.date,
+      payer_id: expense.payerId,
+      participant_ids: expense.participantIds,
+      creator_id: expense.creatorId,
+      created_at: expense.createdAt.toISOString(),
+    })
     if (error) throw error
   }
 

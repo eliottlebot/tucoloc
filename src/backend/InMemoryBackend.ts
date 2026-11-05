@@ -1,4 +1,4 @@
-import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Flatmate, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
+import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type Flatmate, type NewExpense, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
 
 /** An account without a name has no Flatmate row. */
 type Account = { id: string; name?: string; email: string; password: string }
@@ -7,6 +7,7 @@ export class InMemoryBackend implements Backend {
   private accounts: Account[]
   private sessionFlatmateId: string | null
   private occupancies: Occupancy[] = []
+  private expenses: Expense[] = []
   private listeners = new Set<(topic: Topic) => void>()
 
   constructor(options: { accounts: Account[]; loggedInAs?: string }) {
@@ -57,6 +58,15 @@ export class InMemoryBackend implements Backend {
   async free(room: RoomId): Promise<void> {
     this.occupancies = this.occupancies.filter((o) => o.room !== room)
     this.emit('occupancies')
+  }
+
+  async listExpenses(): Promise<Expense[]> {
+    return [...this.expenses]
+  }
+
+  async createExpense(expense: NewExpense): Promise<void> {
+    this.expenses = [...this.expenses, { ...expense, id: `expense-${this.expenses.length + 1}` }]
+    this.emit('expenses')
   }
 
   subscribe(onChange: (topic: Topic) => void): Unsubscribe {
