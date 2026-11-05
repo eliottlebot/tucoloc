@@ -9,6 +9,9 @@ export type Occupancy = { room: RoomId; flatmateId: string; since: Date }
 
 export class InvalidCredentialsError extends Error {}
 
+/** The account exists but has no Flatmate row, so the app can't use it. */
+export class MissingFlatmateError extends Error {}
+
 /** What kind of data changed; listeners refetch that data. */
 export type Topic = 'flatmates' | 'occupancies'
 
@@ -16,8 +19,9 @@ export type Unsubscribe = () => void
 
 /** All server access goes through this interface (see spec #1, "Backend interface"). */
 export interface Backend {
+  /** Throws MissingFlatmateError, after logging out, when the account has no Flatmate. */
   getSession(): Promise<Session | null>
-  /** Throws InvalidCredentialsError when the email or password is wrong. */
+  /** Throws InvalidCredentialsError when the email or password is wrong, MissingFlatmateError when the account has no Flatmate. */
   login(email: string, password: string): Promise<Session>
   logout(): Promise<void>
   listFlatmates(): Promise<Flatmate[]>

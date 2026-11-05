@@ -1,20 +1,33 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { InvalidCredentialsError, type Backend, type Session } from './backend/Backend'
+import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Session } from './backend/Backend'
 import { useLive } from './useLive'
 import { Rooms } from './Rooms'
 import type { Clock } from './clock'
 
 type Props = { backend: Backend; clock: Clock }
 
+const MISSING_FLATMATE_MESSAGE = "Ce compte n'est pas encore configuré dans Tucoloc."
+
 export function App({ backend, clock }: Props) {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
+  const [startupError, setStartupError] = useState<string | null>(null)
 
   useEffect(() => {
-    backend.getSession().then(setSession)
+    backend.getSession().then(setSession, (err) => {
+      if (!(err instanceof MissingFlatmateError)) throw err
+      setStartupError(MISSING_FLATMATE_MESSAGE)
+      setSession(null)
+    })
   }, [backend])
 
   if (session === undefined) return null
-  if (session === null) return <LoginScreen backend={backend} onLogin={setSession} />
+  if (session === null) {
+    const onLogin = (s: Session) => {
+      setStartupError(null)
+      setSession(s)
+    }
+    return <LoginScreen backend={backend} initialError={startupError} onLogin={onLogin} />
+  }
   return (
     <Home
       backend={backend}
@@ -28,18 +41,21 @@ export function App({ backend, clock }: Props) {
   )
 }
 
-function LoginScreen({ backend, onLogin }: { backend: Backend; onLogin: (s: Session) => void }) {
+type LoginProps = { backend: Backend; initialError: string | null; onLogin: (s: Session) => void }
+
+function LoginScreen({ backend, initialError, onLogin }: LoginProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState(initialError)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     try {
       onLogin(await backend.login(email, password))
     } catch (err) {
-      if (!(err instanceof InvalidCredentialsError)) throw err
-      setError('Email ou mot de passe incorrect.')
+      if (err instanceof InvalidCredentialsError) setError('Email ou mot de passe incorrect.')
+      else if (err instanceof MissingFlatmateError) setError(MISSING_FLATMATE_MESSAGE)
+      else throw err
     }
   }
 

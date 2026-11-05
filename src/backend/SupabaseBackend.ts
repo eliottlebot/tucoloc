@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { InvalidCredentialsError, type Backend, type Flatmate, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
+import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Flatmate, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
 
 const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies' }
 
@@ -66,8 +66,12 @@ export class SupabaseBackend implements Backend {
   }
 
   private async sessionFor(userId: string): Promise<Session> {
-    const { data, error } = await this.client.from('flatmates').select('id, name').eq('id', userId).single()
+    const { data, error } = await this.client.from('flatmates').select('id, name').eq('id', userId).maybeSingle()
     if (error) throw error
+    if (!data) {
+      await this.client.auth.signOut()
+      throw new MissingFlatmateError()
+    }
     return { flatmate: data }
   }
 }

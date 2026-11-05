@@ -1,6 +1,7 @@
-import { InvalidCredentialsError, type Backend, type Flatmate, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
+import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Flatmate, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
 
-type Account = Flatmate & { email: string; password: string }
+/** An account without a name has no Flatmate row. */
+type Account = { id: string; name?: string; email: string; password: string }
 
 export class InMemoryBackend implements Backend {
   private accounts: Account[]
@@ -15,12 +16,18 @@ export class InMemoryBackend implements Backend {
 
   async getSession(): Promise<Session | null> {
     const account = this.accounts.find((a) => a.id === this.sessionFlatmateId)
-    return account ? { flatmate: toFlatmate(account) } : null
+    if (!account) return null
+    if (!hasFlatmate(account)) {
+      this.sessionFlatmateId = null
+      throw new MissingFlatmateError()
+    }
+    return { flatmate: toFlatmate(account) }
   }
 
   async login(email: string, password: string): Promise<Session> {
     const account = this.accounts.find((a) => a.email === email && a.password === password)
     if (!account) throw new InvalidCredentialsError()
+    if (!hasFlatmate(account)) throw new MissingFlatmateError()
     this.sessionFlatmateId = account.id
     return { flatmate: toFlatmate(account) }
   }
@@ -30,7 +37,7 @@ export class InMemoryBackend implements Backend {
   }
 
   async listFlatmates(): Promise<Flatmate[]> {
-    return this.accounts.map(toFlatmate)
+    return this.accounts.filter(hasFlatmate).map(toFlatmate)
   }
 
   async listOccupancies(): Promise<Occupancy[]> {
@@ -68,6 +75,10 @@ export class InMemoryBackend implements Backend {
   }
 }
 
-function toFlatmate({ id, name }: Account): Flatmate {
+function hasFlatmate(account: Account): account is Account & Flatmate {
+  return account.name !== undefined
+}
+
+function toFlatmate({ id, name }: Account & Flatmate): Flatmate {
   return { id, name }
 }
