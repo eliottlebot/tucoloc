@@ -12,8 +12,30 @@ export const NO_FLATMATE = { id: 'ghost', email: 'ghost@coloc.fr', password: 'se
 
 export function renderApp(options: { loggedInAs?: string; clock?: Clock } = {}) {
   const backend = new InMemoryBackend({ accounts: [ELIOTT, LEA, TOM, NO_FLATMATE], loggedInAs: options.loggedInAs })
-  const clock = options.clock ?? { now: () => new Date() }
+  const clock = options.clock ?? testClock(new Date())
   const user = userEvent.setup()
   render(<App backend={backend} clock={clock} />)
   return { backend, user }
+}
+
+/** A Clock that only moves when the test calls advance, running the callbacks that fall due. */
+export function testClock(start: Date) {
+  let now = start.getTime()
+  let timers: { at: number; callback: () => void }[] = []
+  return {
+    now: () => new Date(now),
+    at(time: Date, callback: () => void) {
+      const timer = { at: time.getTime(), callback }
+      timers.push(timer)
+      return () => {
+        timers = timers.filter((t) => t !== timer)
+      }
+    },
+    advance(ms: number) {
+      now += ms
+      const due = timers.filter((t) => t.at <= now).sort((a, b) => a.at - b.at)
+      timers = timers.filter((t) => t.at > now)
+      due.forEach((t) => t.callback())
+    },
+  }
 }
