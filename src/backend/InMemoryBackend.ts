@@ -1,10 +1,11 @@
-import { InvalidCredentialsError, type Backend, type Flatmate, type Session, type Topic, type Unsubscribe } from './Backend'
+import { InvalidCredentialsError, type Backend, type Flatmate, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
 
 type Account = Flatmate & { email: string; password: string }
 
 export class InMemoryBackend implements Backend {
   private accounts: Account[]
   private sessionFlatmateId: string | null
+  private occupancies: Occupancy[] = []
   private listeners = new Set<(topic: Topic) => void>()
 
   constructor(options: { accounts: Account[]; loggedInAs?: string }) {
@@ -30,6 +31,25 @@ export class InMemoryBackend implements Backend {
 
   async listFlatmates(): Promise<Flatmate[]> {
     return this.accounts.map(toFlatmate)
+  }
+
+  async listOccupancies(): Promise<Occupancy[]> {
+    return [...this.occupancies]
+  }
+
+  async occupy(room: RoomId, flatmateId: string, since: Date): Promise<void> {
+    await this.occupyUnannounced(room, flatmateId, since)
+    this.emit('occupancies')
+  }
+
+  /** Test helper: an Occupancy from another device whose live update hasn't arrived yet. */
+  async occupyUnannounced(room: RoomId, flatmateId: string, since: Date): Promise<void> {
+    this.occupancies = [...this.occupancies.filter((o) => o.room !== room), { room, flatmateId, since }]
+  }
+
+  async free(room: RoomId): Promise<void> {
+    this.occupancies = this.occupancies.filter((o) => o.room !== room)
+    this.emit('occupancies')
   }
 
   subscribe(onChange: (topic: Topic) => void): Unsubscribe {

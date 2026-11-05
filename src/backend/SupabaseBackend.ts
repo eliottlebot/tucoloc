@@ -1,10 +1,12 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { InvalidCredentialsError, type Backend, type Flatmate, type Session, type Topic, type Unsubscribe } from './Backend'
+import { InvalidCredentialsError, type Backend, type Flatmate, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
 
-const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates' }
+const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies' }
 
 export class SupabaseBackend implements Backend {
   private client: SupabaseClient
+  // supabase-js reuses a channel by name, and a subscribed channel takes no new listeners
+  private channelCount = 0
 
   constructor(url: string, publishableKey: string) {
     this.client = createClient(url, publishableKey)
@@ -34,9 +36,25 @@ export class SupabaseBackend implements Backend {
     return data
   }
 
+  async listOccupancies(): Promise<Occupancy[]> {
+    const { data, error } = await this.client.from('rooms').select('id, flatmate_id, since').not('flatmate_id', 'is', null)
+    if (error) throw error
+    return data.map((r) => ({ room: r.id as RoomId, flatmateId: r.flatmate_id, since: new Date(r.since) }))
+  }
+
+  async occupy(room: RoomId, flatmateId: string, since: Date): Promise<void> {
+    const { error } = await this.client.from('rooms').update({ flatmate_id: flatmateId, since: since.toISOString() }).eq('id', room)
+    if (error) throw error
+  }
+
+  async free(room: RoomId): Promise<void> {
+    const { error } = await this.client.from('rooms').update({ flatmate_id: null, since: null }).eq('id', room)
+    if (error) throw error
+  }
+
   subscribe(onChange: (topic: Topic) => void): Unsubscribe {
     const channel = this.client
-      .channel('changes')
+      .channel(`changes-${++this.channelCount}`)
       .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
         const topic = TOPIC_BY_TABLE[payload.table]
         if (topic) onChange(topic)
