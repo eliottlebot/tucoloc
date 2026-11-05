@@ -213,6 +213,9 @@ step "Set a database password (you won't need it in the app; keep it in your pas
 step "Plan: Free. Click 'Create new project' and wait until it's ready."
 step "Then open Project Settings → Data API (or the 'Connect' button) and copy the Project URL."
 ask VITE_SUPABASE_URL "Paste the Project URL (https://….supabase.co):"
+# The Data API page shows the URL with /rest/v1/; supabase-js adds that itself.
+VITE_SUPABASE_URL="https://${VITE_SUPABASE_URL#https://}"
+VITE_SUPABASE_URL="${VITE_SUPABASE_URL%%.supabase.co*}.supabase.co"
 write_env VITE_SUPABASE_URL "$VITE_SUPABASE_URL"
 step "Open Project Settings → API Keys and copy the Publishable key (starts sb_publishable_)."
 note "It's safe to ship in the browser: row-level security protects the data."
