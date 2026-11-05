@@ -17,6 +17,7 @@ Deploy: Vercel builds `main` on every push. Database changes: SQL files in `supa
 - All server access goes through the `Backend` interface (`src/backend/Backend.ts`): `SupabaseBackend` in production, `InMemoryBackend` in tests. UI code never imports Supabase.
 - Live updates: `Backend.subscribe` reports a changed `Topic`; components read data through `useLive`, which reloads on that topic.
 - Time comes from the injected `Clock`, never `new Date()` in features.
+- PWA: `public/manifest.webmanifest` and `public/sw.js` (installability only, no caching). Icons are rendered from `public/icon.svg`: `rsvg-convert -w N -h N public/icon.svg -o public/<name>.png` for `icon-192`, `icon-512` and `apple-touch-icon` (180).
 - Tests render the real `App` over `InMemoryBackend` and a controllable `Clock` (see `test/render.tsx`) and assert on what a Flatmate sees. No other test seam.
 
 ## Definition of Done
