@@ -58,6 +58,11 @@ button {
   cursor: pointer;
 }
 
+/* Icons sit as blocks: no baseline gap under them, so icon buttons center on their row. */
+button svg {
+  display: block;
+}
+
 button:disabled {
   opacity: 0.4;
   cursor: default;
@@ -290,10 +295,6 @@ p.offline-banner {
   color: var(--free);
 }
 
-/* A block icon: no baseline gap under it. */
-.room button svg {
-  display: block;
-}
 
 .room-occupied button {
   color: var(--action);
@@ -330,6 +331,8 @@ p.offline-banner {
 /* Icon buttons inside a blue card. */
 .card-icon {
   flex: none;
+  display: grid;
+  place-items: center;
   background: none;
   padding: 0;
   color: var(--on-card);
