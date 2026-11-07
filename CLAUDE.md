@@ -18,6 +18,7 @@ Deploy: Vercel builds `main` on every push. Database changes: SQL files in `supa
 - No connection: a Backend call that gets no answer throws `ConnectionError`. `App` wraps the Backend in `watchConnection`, which turns that into the "Pas de connexion" banner and a call that never settles, so features need no error handling for it. Other errors pass through. In tests, `backend.goOffline()` / `goOnline()`.
 - Live updates: `Backend.subscribe` reports a changed `Topic`; components read data through `useLive`, which reloads on that topic.
 - Time comes from the injected `Clock`, never `new Date()` or `setTimeout` in features: `clock.now()` reads it, `clock.at(time, callback)` waits for it. In tests, `testClock(start).advance(ms)` moves time and runs what falls due (wrap in `act`).
+- Recipe photos: private Storage bucket `recipe-photos`. A Recipe stores the photo's path; `listRecipes` returns signed links (30 days), renewed on every reload.
 - Every delete, and recording a Settlement, asks first through the shared `ConfirmDialog` (`src/ConfirmDialog.tsx`).
 - PWA: `public/manifest.webmanifest` and `public/sw.js` (installability only, no caching). Icons come from a 512×512 logo (`icon-512.png`): `icon-192` and `apple-touch-icon` (180) are resizes; `icon-maskable-512` is the logo at 80% on a yellow→orange gradient so Android's mask doesn't crop it.
 - Tests render the real `App` over `InMemoryBackend` and a controllable `Clock` (see `test/render.tsx`) and assert on what a Flatmate sees. No other test seam.

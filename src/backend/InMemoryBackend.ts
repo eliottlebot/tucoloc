@@ -1,4 +1,4 @@
-import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewRecipe, type NewSettlement, type Occupancy, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
+import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewRecipe, type NewSettlement, type Occupancy, type Photo, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
 
 /** An account without a name has no Flatmate row. */
 type Account = { id: string; name?: string; email: string; password: string }
@@ -12,6 +12,7 @@ export class InMemoryBackend implements Backend {
   private settlementCount = 0
   private recipes: Recipe[] = []
   private recipeCount = 0
+  private photoCount = 0
   private listeners = new Set<(topic: Topic) => void>()
   private offline = false
 
@@ -133,6 +134,13 @@ export class InMemoryBackend implements Backend {
     this.failIfOffline()
     this.recipes = this.recipes.filter((r) => r.id !== id)
     this.emit('recipes')
+  }
+
+  /** The url names the file, so tests can tell which photo shows. */
+  async uploadPhoto(file: Blob): Promise<Photo> {
+    this.failIfOffline()
+    const path = `photo-${++this.photoCount}`
+    return { path, url: `memory://${path}/${file instanceof File ? file.name : ''}` }
   }
 
   subscribe(onChange: (topic: Topic) => void): Unsubscribe {

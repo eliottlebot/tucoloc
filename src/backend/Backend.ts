@@ -42,13 +42,16 @@ export type Settlement = { id: string; createdAt: Date; creatorId: string; trans
 
 export type NewSettlement = Omit<Settlement, 'id'>
 
-/** A dish we like; link is null when it has none. */
-export type Recipe = { id: string; title: string; text: string; link: string | null; creatorId: string }
+/** A Recipe photo: where it is stored, and an address to show it. */
+export type Photo = { path: string; url: string }
+
+/** A dish we like; link and photo are null when it has none. */
+export type Recipe = { id: string; title: string; text: string; link: string | null; photo: Photo | null; creatorId: string }
 
 export type NewRecipe = Omit<Recipe, 'id'>
 
 /** What editing a Recipe can change; the creator stays. */
-export type RecipeChanges = Pick<Recipe, 'title' | 'text' | 'link'>
+export type RecipeChanges = Pick<Recipe, 'title' | 'text' | 'link' | 'photo'>
 
 /** What kind of data changed; listeners refetch that data. */
 export type Topic = 'flatmates' | 'occupancies' | 'expenses' | 'settlements' | 'recipes'
@@ -77,6 +80,8 @@ export interface Backend {
   createRecipe(recipe: NewRecipe): Promise<void>
   updateRecipe(id: string, changes: RecipeChanges): Promise<void>
   deleteRecipe(id: string): Promise<void>
+  /** Stores a photo for a Recipe to point at. */
+  uploadPhoto(file: Blob): Promise<Photo>
   /** Calls onChange whenever data changes, on this device or another one. */
   subscribe(onChange: (topic: Topic) => void): Unsubscribe
 }
