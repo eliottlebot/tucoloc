@@ -8,12 +8,12 @@ const LEAS_CURRY: NewRecipe = { title: 'Curry', text: 'Lait de coco', link: null
 
 const tonight = () => within(screen.getByRole('region', { name: 'Ce soir' }))
 
-/** Opens the Repas tab at that moment, with Léa's Curry in the Recipes. */
+/** Opens the Repas tab at that moment, with Lea's Curry in the Recipes. */
 async function openMealsAt(moment: string) {
   const clock = testClock(new Date(moment))
   const opened = renderApp({ loggedInAs: ELIOTT.id, clock })
   await opened.backend.createRecipe(LEAS_CURRY)
-  await opened.user.click(await screen.findByRole('tab', { name: 'Repas' }))
+  await opened.user.click(await screen.findByRole('button', { name: 'Recettes' }))
   await screen.findByRole('button', { name: 'Curry' })
   return { ...opened, clock }
 }
@@ -23,23 +23,23 @@ const EVENING = '2026-11-05T18:00:00Z'
 
 test('a Flatmate sets tonight’s Meal from a Recipe', async () => {
   const { user } = await openMealsAt(EVENING)
-  expect(tonight().getByText('Rien de prévu.')).toBeInTheDocument()
+  expect(tonight().getByText('Rien de prevu.')).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: 'Curry' }))
   await user.click(screen.getByRole('button', { name: 'Choisir pour ce soir' }))
 
   expect(await tonight().findByRole('button', { name: 'Curry' })).toBeInTheDocument()
-  expect(tonight().getByText('Choisi par Eliott à 19:00')).toBeInTheDocument()
+  expect(tonight().getByText('Choisi par Eliott a 19:00')).toBeInTheDocument()
 })
 
 test('a Flatmate sets tonight’s Meal as free text', async () => {
   const { user } = await openMealsAt(EVENING)
 
-  await user.type(tonight().getByLabelText('Autre plat'), 'Pizza commandée')
+  await user.type(tonight().getByLabelText('Autre plat'), 'Pizza commandee')
   await user.click(tonight().getByRole('button', { name: 'Choisir' }))
 
-  expect(await tonight().findByText('Pizza commandée')).toBeInTheDocument()
-  expect(tonight().getByText('Choisi par Eliott à 19:00')).toBeInTheDocument()
+  expect(await tonight().findByText('Pizza commandee')).toBeInTheDocument()
+  expect(tonight().getByText('Choisi par Eliott a 19:00')).toBeInTheDocument()
 })
 
 async function chooseText(user: Awaited<ReturnType<typeof openMealsAt>>['user'], dish: string) {
@@ -50,21 +50,21 @@ async function chooseText(user: Awaited<ReturnType<typeof openMealsAt>>['user'],
 
 test('choosing another Meal replaces it in one action', async () => {
   const { user } = await openMealsAt(EVENING)
-  await chooseText(user, 'Pizza commandée')
+  await chooseText(user, 'Pizza commandee')
 
   await chooseText(user, 'Restes')
 
-  expect(tonight().queryByText('Pizza commandée')).not.toBeInTheDocument()
+  expect(tonight().queryByText('Pizza commandee')).not.toBeInTheDocument()
   expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
 })
 
 test('a Flatmate clears tonight’s Meal', async () => {
   const { user } = await openMealsAt(EVENING)
-  await chooseText(user, 'Pizza commandée')
+  await chooseText(user, 'Pizza commandee')
 
   await user.click(tonight().getByRole('button', { name: 'Effacer' }))
 
-  expect(await tonight().findByText('Rien de prévu.')).toBeInTheDocument()
+  expect(await tonight().findByText('Rien de prevu.')).toBeInTheDocument()
 })
 
 test('the Meal’s Recipe opens from the Meal', async () => {
@@ -80,13 +80,13 @@ test('the Meal’s Recipe opens from the Meal', async () => {
 
 test('a Meal set at 19:00 is still tonight’s at 5:59 the next day, and gone at 6:00', async () => {
   const { user, clock } = await openMealsAt(EVENING)
-  await chooseText(user, 'Pizza commandée')
+  await chooseText(user, 'Pizza commandee')
 
   act(() => clock.advance(10 * HOUR + 59 * 60 * 1000))
-  expect(tonight().getByText('Pizza commandée')).toBeInTheDocument()
+  expect(tonight().getByText('Pizza commandee')).toBeInTheDocument()
 
   act(() => clock.advance(60 * 1000))
-  expect(tonight().getByText('Rien de prévu.')).toBeInTheDocument()
+  expect(tonight().getByText('Rien de prevu.')).toBeInTheDocument()
 })
 
 test('a Meal set at 7:00 is still tonight’s at 23:00 the same day', async () => {
@@ -108,7 +108,7 @@ test('6:00 is Paris time in summer too (UTC+2)', async () => {
   expect(tonight().getByText('Salade')).toBeInTheDocument()
 
   act(() => clock.advance(60 * 1000))
-  expect(tonight().getByText('Rien de prévu.')).toBeInTheDocument()
+  expect(tonight().getByText('Rien de prevu.')).toBeInTheDocument()
 })
 
 test('a Meal set before 6:00 is over at 6:00 the same morning', async () => {
@@ -118,7 +118,7 @@ test('a Meal set before 6:00 is over at 6:00 the same morning', async () => {
 
   act(() => clock.advance(5 * HOUR))
 
-  expect(tonight().getByText('Rien de prévu.')).toBeInTheDocument()
+  expect(tonight().getByText('Rien de prevu.')).toBeInTheDocument()
 })
 
 test('deleting the Meal’s Recipe empties the Meal', async () => {
@@ -131,7 +131,7 @@ test('deleting the Meal’s Recipe empties the Meal', async () => {
   await user.click(screen.getByRole('button', { name: 'Supprimer' }))
   await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Supprimer' }))
 
-  expect(await tonight().findByText('Rien de prévu.')).toBeInTheDocument()
+  expect(await tonight().findByText('Rien de prevu.')).toBeInTheDocument()
 })
 
 test('a Meal set by another Flatmate appears without reload', async () => {
@@ -140,5 +140,5 @@ test('a Meal set by another Flatmate appears without reload', async () => {
   await backend.setMeal({ recipeId: null, text: 'Raclette', setBy: LEA.id, setAt: new Date(EVENING) })
 
   expect(await tonight().findByText('Raclette')).toBeInTheDocument()
-  expect(tonight().getByText('Choisi par Léa à 19:00')).toBeInTheDocument()
+  expect(tonight().getByText('Choisi par Lea a 19:00')).toBeInTheDocument()
 })

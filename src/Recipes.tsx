@@ -3,6 +3,7 @@ import type { Backend, Flatmate, Photo, Recipe } from './backend/Backend'
 import type { Clock } from './clock'
 import { ConfirmDialog } from './ConfirmDialog'
 import { TonightsMeal } from './Meal'
+import { plain } from './plain'
 import { useLive } from './useLive'
 
 /** Nutrition values per portion, in the order and with the letters shown: "P: 43g G: 160g L: 20g". */
@@ -64,7 +65,7 @@ export function Recipes({ backend, clock, me, flatmates }: Props) {
         />
         {confirmingDelete && (
           <ConfirmDialog
-            question={`Supprimer la recette « ${openRecipe.title} » ?`}
+            question={`Supprimer la recette "${openRecipe.title}" ?`}
             confirmLabel="Supprimer"
             onCancel={() => setConfirmingDelete(false)}
             onConfirm={async () => {
@@ -118,7 +119,7 @@ function RecipeView({ recipe, nameOf, onBack, onEdit, onDelete, onChooseForTonig
           </a>
         </p>
       )}
-      <p>Ajoutée par {nameOf(recipe.creatorId)}</p>
+      <p>Ajoutee par {nameOf(recipe.creatorId)}</p>
       <button onClick={onBack}>Retour</button>
       <button onClick={onChooseForTonight}>Choisir pour ce soir</button>
       <button onClick={onEdit}>Modifier</button>
@@ -160,8 +161,8 @@ function RecipeForm({ backend, me, editing, onDone }: FormProps) {
     const gramsOf = (key: Nutrient) => (grams[key].trim() ? Number(grams[key].trim()) : null)
     setSaving(true)
     const changes = {
-      title: title.trim(),
-      text: text.trim(),
+      title: plain(title.trim()),
+      text: plain(text.trim()),
       link: link.trim() || null,
       photo: newPhoto ? await backend.uploadPhoto(newPhoto) : photo,
       proteins: gramsOf('proteins'),

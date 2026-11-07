@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import { SupabaseBackend } from './backend/SupabaseBackend'
 import { systemClock } from './clock'
+import './styles.css'
 
 const backend = new SupabaseBackend(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
 

@@ -2,17 +2,22 @@ import { useState, type FormEvent } from 'react'
 import type { Backend, Day, Expense, Flatmate, Settlement, Transfer } from './backend/Backend'
 import type { Clock } from './clock'
 import { ConfirmDialog } from './ConfirmDialog'
+import { plain } from './plain'
 import { useLive } from './useLive'
 
 /** "12,50 €"; with signDisplay 'exceptZero', "+12,50 €" and "-12,50 €". */
 const formatEuros = (cents: number, signDisplay: Intl.NumberFormatOptions['signDisplay'] = 'auto') =>
-  (cents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', signDisplay })
+  (cents / 100)
+    .toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', signDisplay })
+    // The design font has no narrow no-break space; a plain no-break one keeps "12,50 €" on one line.
+    .replace(/\u202f/g, '\u00a0')
 
 /** Cents as form input text: "12,50", without the € sign. */
 const toAmountInput = (cents: number) => (cents / 100).toFixed(2).replace('.', ',')
 
+/** "3 dec. 2026": French short months, without accents for the design font. */
 const formatDay = (day: Day) =>
-  new Date(`${day}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+  plain(new Date(`${day}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }))
 
 /** The date in Paris at that moment, as a Day. */
 const dayInParis = (moment: Date): Day => moment.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
@@ -99,7 +104,7 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
         nameOf={nameOf}
         onSettle={() =>
           setConfirming({
-            question: 'Enregistrer un règlement ? Chaque solde repassera à 0,00 €.',
+            question: 'Enregistrer un reglement ? Chaque solde repassera a 0,00 €.',
             confirmLabel: 'Enregistrer',
             action: async () => {
               // Worked out again on confirm: another phone may have added an Expense or settled meanwhile.
@@ -112,7 +117,7 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
         }
       />
       {form === 'closed' ? (
-        <button onClick={() => setForm('new')}>Ajouter une dépense</button>
+        <button onClick={() => setForm('new')}>Ajouter une depense</button>
       ) : (
         <ExpenseForm
           key={form === 'new' ? 'new' : form.id}
@@ -135,7 +140,7 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
             onEdit={() => setForm(e)}
             onDelete={() =>
               setConfirming({
-                question: `Supprimer la dépense « ${e.label} » ?`,
+                question: `Supprimer la depense "${e.label}" ?`,
                 confirmLabel: 'Supprimer',
                 action: () => backend.deleteExpense(e.id),
               })
@@ -149,7 +154,7 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
           nameOf={nameOf}
           onDelete={(s) =>
             setConfirming({
-              question: `Supprimer le règlement du ${formatDay(dayInParis(s.createdAt))} ?`,
+              question: `Supprimer le reglement du ${formatDay(dayInParis(s.createdAt))} ?`,
               confirmLabel: 'Supprimer',
               action: () => backend.deleteSettlement(s.id),
             })
@@ -195,18 +200,18 @@ function Balances({ expenses, flatmates, nameOf, onSettle }: BalancesProps) {
           ))}
         </tbody>
       </table>
-      <h2>Virements suggérés</h2>
+      <h2>Virements suggeres</h2>
       {transfers.length === 0 ? (
-        <p>Tout le monde est à jour.</p>
+        <p>Tout le monde est a jour.</p>
       ) : (
         transfers.map((t) => (
           <p key={t.fromId + t.toId}>
-            {nameOf(t.fromId)} doit {formatEuros(t.cents)} à {nameOf(t.toId)}
+            {nameOf(t.fromId)} doit {formatEuros(t.cents)} a {nameOf(t.toId)}
           </p>
         ))
       )}
       <button disabled={transfers.length === 0} onClick={onSettle}>
-        Enregistrer un règlement
+        Enregistrer un reglement
       </button>
     </section>
   )
@@ -217,16 +222,16 @@ type HistoryProps = { settlements: Settlement[]; nameOf: (id: string) => string;
 function SettlementHistory({ settlements, nameOf, onDelete }: HistoryProps) {
   return (
     <section>
-      <h2>Règlements</h2>
-      <ul aria-label="Règlements">
+      <h2>Reglements</h2>
+      <ul aria-label="Reglements">
         {[...settlements].sort(latestFirst).map((s) => (
           <li key={s.id}>
             <p>
-              <span>{formatDay(dayInParis(s.createdAt))}</span> · <span>Enregistré par {nameOf(s.creatorId)}</span>
+              <span>{formatDay(dayInParis(s.createdAt))}</span> · <span>Enregistre par {nameOf(s.creatorId)}</span>
             </p>
             {s.transfers.map((t) => (
               <p key={t.fromId + t.toId}>
-                {nameOf(t.fromId)} a payé {formatEuros(t.cents)} à {nameOf(t.toId)}
+                {nameOf(t.fromId)} a paye {formatEuros(t.cents)} a {nameOf(t.toId)}
               </p>
             ))}
             <button onClick={() => onDelete(s)}>Supprimer</button>
@@ -253,10 +258,10 @@ function ExpenseItem({ expense, flatmates, nameOf, settled, onEdit, onDelete }: 
   return (
     <li aria-label={expense.label}>
       <strong>{expense.label}</strong> <span>{formatEuros(expense.amountCents)}</span>
-      {settled && <> · <span>réglé</span></>}
+      {settled && <> · <span>regle</span></>}
       <p>
-        <span>{formatDay(expense.date)}</span> · <span>Payé par {nameOf(expense.payerId)}</span> ·{' '}
-        <span>Ajoutée par {nameOf(expense.creatorId)}</span>
+        <span>{formatDay(expense.date)}</span> · <span>Paye par {nameOf(expense.payerId)}</span> ·{' '}
+        <span>Ajoutee par {nameOf(expense.creatorId)}</span>
       </p>
       <p>{shares.map((s) => `${nameOf(s.flatmateId)} ${formatEuros(s.cents)}`).join(' · ')}</p>
       {!settled && (
@@ -294,12 +299,12 @@ function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormPro
   async function submit(e: FormEvent) {
     e.preventDefault()
     const amountCents = parseEuros(amount)
-    if (!label.trim()) return setError('Le libellé est obligatoire.')
-    if (!amountCents) return setError('Indique un montant supérieur à 0 (ex. 12,50).')
+    if (!label.trim()) return setError('Le libelle est obligatoire.')
+    if (!amountCents) return setError('Indique un montant superieur a 0 (ex. 12,50).')
     if (!date) return setError('La date est obligatoire.')
     if (participantIds.length === 0) return setError('Choisis au moins un participant.')
     setSaving(true)
-    const changes = { label: label.trim(), amountCents, date, payerId, participantIds }
+    const changes = { label: plain(label.trim()), amountCents, date, payerId, participantIds }
     if (editing) await backend.updateExpense(editing.id, changes)
     else await backend.createExpense({ ...changes, creatorId: me.id, createdAt: clock.now() })
     onDone()
@@ -308,7 +313,7 @@ function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormPro
   return (
     <form onSubmit={submit}>
       <label>
-        Libellé
+        Libelle
         <input value={label} onChange={(e) => setLabel(e.target.value)} />
       </label>
       <label>
@@ -320,7 +325,7 @@ function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormPro
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </label>
       <label>
-        Payé par
+        Paye par
         <select value={payerId} onChange={(e) => setPayerId(e.target.value)}>
           {flatmates.map((f) => (
             <option key={f.id} value={f.id}>

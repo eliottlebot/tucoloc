@@ -9,8 +9,8 @@ const MINUTE = 60 * 1000
 type Room = { id: RoomId; name: string; occupied: string; freesAfter: number }
 
 const ROOMS: Room[] = [
-  { id: 'wc', name: 'WC', occupied: 'Occupé', freesAfter: 15 * MINUTE },
-  { id: 'salle-de-bain', name: 'Salle de bain', occupied: 'Occupée', freesAfter: 45 * MINUTE },
+  { id: 'wc', name: 'WC', occupied: 'Occupe', freesAfter: 15 * MINUTE },
+  { id: 'salle-de-bain', name: 'Salle de bain', occupied: 'Occupee', freesAfter: 45 * MINUTE },
 ]
 
 const endOf = (o: Occupancy) => o.since.getTime() + ROOMS.find((r) => r.id === o.room)!.freesAfter
@@ -45,7 +45,7 @@ export function Rooms({ backend, clock, me, flatmates }: Props) {
   async function occupy(room: Room) {
     const taken = ongoing(await backend.listOccupancies(), clock.now()).find((o) => o.room === room.id)
     if (taken) {
-      setRefusal({ room: room.id, message: `${room.name} déjà ${room.occupied.toLowerCase()} par ${nameOf(taken.flatmateId)}.` })
+      setRefusal({ room: room.id, message: `${room.name} deja ${room.occupied.toLowerCase()} par ${nameOf(taken.flatmateId)}.` })
       return
     }
     setRefusal(null)
@@ -64,7 +64,7 @@ export function Rooms({ backend, clock, me, flatmates }: Props) {
                 <p>
                   {room.occupied} par {nameOf(occupancy.flatmateId)} depuis {formatTime(occupancy.since)}
                 </p>
-                <button onClick={() => backend.free(room.id)}>Je libère</button>
+                <button onClick={() => backend.free(room.id)}>Je libere</button>
               </>
             ) : (
               <>
