@@ -16,7 +16,7 @@ const NUTRIENTS = [
 type Nutrient = (typeof NUTRIENTS)[number]['key']
 
 /** Only the values given; empty when none is. */
-const formatNutrition = (recipe: Recipe) =>
+export const formatNutrition = (recipe: Recipe) =>
   NUTRIENTS.filter((n) => recipe[n.key] !== null)
     .map((n) => `${n.letter}: ${recipe[n.key]}g`)
     .join(' ')

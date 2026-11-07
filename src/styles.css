@@ -43,7 +43,7 @@ h2 {
 }
 
 h2 {
-  font-size: 28px;
+  font-size: 30px;
   margin: 32px 0 16px;
 }
 
@@ -197,4 +197,120 @@ p.offline-banner {
 
 .dialog button + button {
   margin-left: 12px;
+}
+
+/* Blue card, shared by every screen. */
+.card {
+  background: var(--card);
+  color: var(--on-card);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+
+.card p {
+  margin: 0;
+}
+
+/* Home: tonight's Meal. */
+.meal-card,
+.meal-skeleton {
+  display: flex;
+  gap: 13px;
+  min-height: 136px;
+}
+
+.meal-skeleton {
+  flex: 1;
+}
+
+.meal-photo {
+  flex: none;
+  width: 100px;
+  height: 100px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: rgb(255 255 255 / 0.15);
+}
+
+.meal-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.meal-title {
+  color: var(--highlight);
+  font-size: 24px;
+  overflow-wrap: anywhere;
+}
+
+.meal-chosen-by {
+  color: var(--background);
+  font-size: 18px;
+}
+
+.card .meal-nutrition {
+  margin-top: auto;
+  color: var(--background);
+  font-size: 16px;
+}
+
+.meal-skeleton .meal-details span {
+  display: block;
+  height: 22px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.15);
+}
+
+.meal-skeleton .meal-details span:last-child {
+  width: 60%;
+}
+
+/* Home: the two Rooms side by side; green icon when free, red when occupied. */
+.rooms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 170px;
+  align-items: center;
+  text-align: center;
+}
+
+.room {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.room button {
+  background: none;
+  padding: 0;
+  color: var(--free);
+}
+
+/* A block icon: no baseline gap under it. */
+.room button svg {
+  display: block;
+}
+
+.room-occupied button {
+  color: var(--action);
+}
+
+.room-who {
+  font-size: 24px;
+  color: var(--background);
+}
+
+.room-since {
+  font-size: 20px;
+  color: var(--background);
+}
+
+.room p[role='alert'] {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--highlight);
 }
