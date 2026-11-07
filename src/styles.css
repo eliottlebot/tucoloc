@@ -314,3 +314,217 @@ p.offline-banner {
   font-size: 14px;
   color: var(--highlight);
 }
+
+/* Red square buttons with a white icon: form and Recipe actions, the add button. */
+.action-button {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 12px;
+  background: var(--action);
+  color: var(--on-card);
+}
+
+/* Icon buttons inside a blue card. */
+.card-icon {
+  flex: none;
+  background: none;
+  padding: 0;
+  color: var(--on-card);
+}
+
+/* The add button, bottom right of the column, above the bottom bar. */
+.fab {
+  position: fixed;
+  z-index: 1;
+  right: max(16px, calc(50vw - 210px + 16px));
+  bottom: calc(127px + env(safe-area-inset-bottom));
+}
+
+/* Close / save / edit / delete, top right of a form or a Recipe. */
+.screen-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+/* "Titre :" — the colon is decoration, not part of the field's name. */
+.label-text::after {
+  content: ' :';
+}
+
+.field-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.field-inline .label-text {
+  flex: none;
+}
+
+.field-inline input {
+  margin-top: 0;
+}
+
+.text-button {
+  background: none;
+  color: var(--action);
+  padding: 0;
+  text-decoration: underline;
+}
+
+/* Recettes: tonight's selection. */
+.selection,
+.selection-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.selection {
+  min-height: 81px;
+  padding: 11px 19px;
+}
+
+.selection-form {
+  flex: 1;
+}
+
+.selection-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.selection-label {
+  font-size: 20px;
+  color: var(--background);
+}
+
+.selection-label-empty {
+  font-size: 24px;
+  color: var(--highlight);
+}
+
+.selection-dish {
+  display: block;
+  font-size: 24px;
+  color: var(--highlight);
+  background: none;
+  padding: 0;
+  text-align: left;
+}
+
+.selection input {
+  height: 29px;
+  margin-top: 2px;
+  padding: 4px 9px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.selection input::placeholder {
+  color: #c3c3c3;
+}
+
+/* Recettes: the list. */
+.recipe-list {
+  list-style: none;
+  margin: 17px 0 0;
+  padding: 0;
+}
+
+.recipe-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 17px;
+  padding: 14px 19px;
+}
+
+.recipe-open {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  grid-template-rows: auto 1fr;
+  column-gap: 13px;
+  padding: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+
+.recipe-photo {
+  grid-row: span 2;
+  width: 100px;
+  height: 100px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: rgb(255 255 255 / 0.15);
+}
+
+.recipe-title {
+  font-size: 24px;
+  color: var(--highlight);
+  overflow-wrap: anywhere;
+}
+
+.recipe-nutrition {
+  align-self: end;
+  font-size: 16px;
+  color: var(--background);
+}
+
+/* Recettes: one Recipe. */
+.recipe-view-photo {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+.recipe-view-nutrition,
+.recipe-view-creator {
+  font-size: 18px;
+}
+
+.recipe-view-text {
+  white-space: pre-wrap;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+/* Recettes: add or edit a Recipe. */
+.recipe-form label {
+  font-size: 30px;
+}
+
+.recipe-form textarea {
+  height: 137px;
+}
+
+.photo-picker .action-button {
+  flex: 1;
+}
+
+.photo-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.photo-preview {
+  height: 153px;
+  background: #d9d9d9;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
