@@ -110,7 +110,7 @@ function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: 
       <div role="tabpanel" aria-label={tab}>
         {tab === 'Pièces' && <Rooms backend={backend} clock={clock} me={me} flatmates={flatmates} />}
         {tab === 'Dépenses' && <Expenses backend={backend} clock={clock} me={me} flatmates={flatmates} />}
-        {tab === 'Repas' && <Recipes backend={backend} me={me} flatmates={flatmates} />}
+        {tab === 'Repas' && <Recipes backend={backend} clock={clock} me={me} flatmates={flatmates} />}
       </div>
     </div>
   )

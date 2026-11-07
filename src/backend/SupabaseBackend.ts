@@ -1,5 +1,5 @@
 import { createClient, isAuthError, isAuthRetryableFetchError, StorageApiError, type SupabaseClient } from '@supabase/supabase-js'
-import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewRecipe, type NewSettlement, type Occupancy, type Photo, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
+import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type Meal, type NewExpense, type NewRecipe, type NewSettlement, type Occupancy, type Photo, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
 
 /** A request that got no answer becomes a ConnectionError; an answer refusing it (or a bug) stays as it is. */
 function orConnectionError(error: { message: string; code?: string }) {
@@ -14,7 +14,7 @@ const PHOTOS = 'recipe-photos'
 /** Photos are private: shown through signed links, renewed on every reload. */
 const PHOTO_LINK_SECONDS = 30 * 24 * 60 * 60
 
-const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses', settlements: 'settlements', recipes: 'recipes' }
+const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses', settlements: 'settlements', recipes: 'recipes', meal: 'meal' }
 
 export class SupabaseBackend implements Backend {
   private client: SupabaseClient
@@ -197,6 +197,28 @@ export class SupabaseBackend implements Backend {
     const signed = await this.client.storage.from(PHOTOS).createSignedUrl(path, PHOTO_LINK_SECONDS)
     if (signed.error) throw orConnectionError(signed.error)
     return { path, url: signed.data.signedUrl }
+  }
+
+  async getMeal(): Promise<Meal | null> {
+    const { data, error } = await this.client.from('meal').select('recipe_id, text, set_by, set_at').maybeSingle()
+    if (error) throw orConnectionError(error)
+    return data && { recipeId: data.recipe_id, text: data.text, setBy: data.set_by, setAt: new Date(data.set_at) }
+  }
+
+  async setMeal(meal: Meal): Promise<void> {
+    const { error } = await this.client.from('meal').upsert({
+      id: true,
+      recipe_id: meal.recipeId,
+      text: meal.text,
+      set_by: meal.setBy,
+      set_at: meal.setAt.toISOString(),
+    })
+    if (error) throw orConnectionError(error)
+  }
+
+  async clearMeal(): Promise<void> {
+    const { error } = await this.client.from('meal').delete().eq('id', true)
+    if (error) throw orConnectionError(error)
   }
 
   subscribe(onChange: (topic: Topic) => void): Unsubscribe {

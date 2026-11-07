@@ -53,8 +53,11 @@ export type NewRecipe = Omit<Recipe, 'id'>
 /** What editing a Recipe can change; the creator stays. */
 export type RecipeChanges = Pick<Recipe, 'title' | 'text' | 'link' | 'photo'>
 
+/** Tonight's dish for the whole Flatshare: a Recipe or free text, exactly one of the two. */
+export type Meal = { recipeId: string | null; text: string | null; setBy: string; setAt: Date }
+
 /** What kind of data changed; listeners refetch that data. */
-export type Topic = 'flatmates' | 'occupancies' | 'expenses' | 'settlements' | 'recipes'
+export type Topic = 'flatmates' | 'occupancies' | 'expenses' | 'settlements' | 'recipes' | 'meal'
 
 export type Unsubscribe = () => void
 
@@ -82,6 +85,11 @@ export interface Backend {
   deleteRecipe(id: string): Promise<void>
   /** Stores a photo for a Recipe to point at. */
   uploadPhoto(file: Blob): Promise<Photo>
+  /** The last Meal set, however old: whether it is still tonight's is up to the app. */
+  getMeal(): Promise<Meal | null>
+  /** Replaces the Meal. */
+  setMeal(meal: Meal): Promise<void>
+  clearMeal(): Promise<void>
   /** Calls onChange whenever data changes, on this device or another one. */
   subscribe(onChange: (topic: Topic) => void): Unsubscribe
 }
