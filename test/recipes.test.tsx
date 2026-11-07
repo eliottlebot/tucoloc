@@ -4,6 +4,8 @@ import { ELIOTT, LEA, renderApp } from './render'
 
 const recipes = () => within(screen.getByRole('list', { name: 'Recettes' }))
 
+const LEAS_CURRY = { title: 'Curry', text: 'Lait de coco', link: null, photo: null, proteins: null, carbs: null, fats: null, creatorId: LEA.id }
+
 async function openRecipes() {
   const opened = renderApp({ loggedInAs: ELIOTT.id })
   await opened.user.click(await screen.findByRole('button', { name: 'Recettes' }))
@@ -11,11 +13,10 @@ async function openRecipes() {
   return opened
 }
 
-async function addRecipe(user: UserEvent, fields: { title: string; text?: string; link?: string }) {
+async function addRecipe(user: UserEvent, fields: { title: string; text?: string }) {
   await user.click(screen.getByRole('button', { name: 'Ajouter une recette' }))
   await user.type(screen.getByLabelText('Titre'), fields.title)
   if (fields.text) await user.type(screen.getByLabelText('Recette'), fields.text)
-  if (fields.link) await user.type(screen.getByLabelText('Lien'), fields.link)
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 }
 
@@ -36,35 +37,47 @@ test('a Recipe without a title is refused', async () => {
   expect(await backend.listRecipes()).toEqual([])
 })
 
-test('a link that is not a web address is refused', async () => {
+test('closing the form saves nothing', async () => {
   const { backend, user } = await openRecipes()
+  await user.click(screen.getByRole('button', { name: 'Ajouter une recette' }))
+  await user.type(screen.getByLabelText('Titre'), 'Tarte')
 
-  await addRecipe(user, { title: 'Tarte', link: 'javascript:alert(1)' })
+  await user.click(screen.getByRole('button', { name: 'Annuler' }))
 
-  expect(await screen.findByRole('alert')).toHaveTextContent('Le lien doit commencer par http:// ou https://.')
+  expect(await screen.findByRole('button', { name: 'Ajouter une recette' })).toBeInTheDocument()
   expect(await backend.listRecipes()).toEqual([])
 })
 
-test('a Flatmate opens a Recipe to read its full text and follow its link', async () => {
+test('a Recipe no longer offers a link', async () => {
+  const { backend, user } = await openRecipes()
+  await backend.createRecipe({ ...LEAS_CURRY, link: 'https://cuisine.example/curry' })
+
+  await user.click(await recipes().findByRole('button', { name: 'Curry' }))
+  expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Modifier' }))
+  expect(screen.queryByLabelText('Lien')).not.toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
+  await screen.findByRole('heading', { name: 'Curry' })
+  expect(await backend.listRecipes()).toMatchObject([{ link: 'https://cuisine.example/curry' }])
+})
+
+test('a Flatmate opens a Recipe to read its full text', async () => {
   const { user } = await openRecipes()
   await addRecipe(user, {
     title: 'Tarte aux poireaux',
     text: 'Pate brisee{enter}3 poireaux{enter}Cuire 35 min a 180 °C',
-    link: 'https://cuisine.example/tarte',
   })
 
   await user.click(await recipes().findByRole('button', { name: 'Tarte aux poireaux' }))
 
   expect(screen.getByRole('heading', { name: 'Tarte aux poireaux' })).toBeInTheDocument()
   expect(screen.getByText(/Cuire 35 min a 180 °C/)).toHaveTextContent('Pate brisee 3 poireaux Cuire 35 min a 180 °C')
-  expect(screen.getByRole('link', { name: 'https://cuisine.example/tarte' })).toHaveAttribute('href', 'https://cuisine.example/tarte')
   expect(screen.getByText('Ajoutee par Eliott')).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: 'Retour' }))
   expect(recipes().getByRole('button', { name: 'Tarte aux poireaux' })).toBeInTheDocument()
 })
-
-const LEAS_CURRY = { title: 'Curry', text: 'Lait de coco', link: null, photo: null, proteins: null, carbs: null, fats: null, creatorId: LEA.id }
 
 test('a Flatmate edits a Recipe another Flatmate added', async () => {
   const { backend, user } = await openRecipes()
@@ -76,12 +89,10 @@ test('a Flatmate edits a Recipe another Flatmate added', async () => {
   await user.clear(screen.getByLabelText('Titre'))
   await user.type(screen.getByLabelText('Titre'), 'Curry de legumes')
   await user.type(screen.getByLabelText('Recette'), ', pois chiches')
-  await user.type(screen.getByLabelText('Lien'), 'https://cuisine.example/curry')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
   expect(await screen.findByRole('heading', { name: 'Curry de legumes' })).toBeInTheDocument()
   expect(screen.getByText('Lait de coco, pois chiches')).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'https://cuisine.example/curry' })).toBeInTheDocument()
   expect(screen.getByText('Ajoutee par Lea')).toBeInTheDocument()
 })
 

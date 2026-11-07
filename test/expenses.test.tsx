@@ -16,8 +16,8 @@ test('a Flatmate adds an Expense with the defaults', async () => {
   const { user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
   await openNewExpense(user)
 
-  await user.type(screen.getByLabelText('Libelle'), 'Courses')
-  await user.type(screen.getByLabelText('Montant (€)'), '12,60')
+  await user.type(screen.getByLabelText('Titre'), 'Courses')
+  await user.type(screen.getByLabelText('Prix'), '12,60')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
   const courses = await expense('Courses')
@@ -32,9 +32,9 @@ test('a Flatmate adds an Expense someone else paid', async () => {
   const { user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
   await openNewExpense(user)
 
-  await user.type(screen.getByLabelText('Libelle'), 'Internet')
-  await user.type(screen.getByLabelText('Montant (€)'), '30')
-  await user.selectOptions(screen.getByLabelText('Paye par'), 'Lea')
+  await user.type(screen.getByLabelText('Titre'), 'Internet')
+  await user.type(screen.getByLabelText('Prix'), '30')
+  await user.selectOptions(screen.getByLabelText('Acheteur'), 'Lea')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
   const internet = await expense('Internet')
@@ -46,8 +46,8 @@ test('a Flatmate adds an Expense shared by some Flatmates only', async () => {
   const { user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
   await openNewExpense(user)
 
-  await user.type(screen.getByLabelText('Libelle'), 'Cinema')
-  await user.type(screen.getByLabelText('Montant (€)'), '12,60')
+  await user.type(screen.getByLabelText('Titre'), 'Cinema')
+  await user.type(screen.getByLabelText('Prix'), '12,60')
   const participants = within(screen.getByRole('group', { name: 'Participants' }))
   await user.click(participants.getByRole('checkbox', { name: 'Tom' }))
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
@@ -58,14 +58,14 @@ test('a Flatmate adds an Expense shared by some Flatmates only', async () => {
 test('a back-dated Expense is listed after more recent ones', async () => {
   const { user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
   await openNewExpense(user)
-  await user.type(screen.getByLabelText('Libelle'), 'Loyer')
-  await user.type(screen.getByLabelText('Montant (€)'), '900')
+  await user.type(screen.getByLabelText('Titre'), 'Loyer')
+  await user.type(screen.getByLabelText('Prix'), '900')
   await user.clear(screen.getByLabelText('Date'))
   await user.type(screen.getByLabelText('Date'), '2026-10-01')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
   await user.click(await screen.findByRole('button', { name: 'Ajouter une depense' }))
-  await user.type(screen.getByLabelText('Libelle'), 'Pain')
-  await user.type(screen.getByLabelText('Montant (€)'), '3')
+  await user.type(screen.getByLabelText('Titre'), 'Pain')
+  await user.type(screen.getByLabelText('Prix'), '3')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
   expect((await expense('Loyer')).getByText('1 oct. 2026')).toBeInTheDocument()
@@ -77,10 +77,10 @@ test('an Expense without a label is refused', async () => {
   const { user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
   await openNewExpense(user)
 
-  await user.type(screen.getByLabelText('Montant (€)'), '10')
+  await user.type(screen.getByLabelText('Prix'), '10')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
-  expect(await screen.findByRole('alert')).toHaveTextContent('Le libelle est obligatoire.')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Le titre est obligatoire.')
   expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
 })
 
@@ -88,11 +88,11 @@ test.each(['0', '0,00', '-5', '12,345', '99999999'])('an amount of %s € is ref
   const { user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
   await openNewExpense(user)
 
-  await user.type(screen.getByLabelText('Libelle'), 'Rien')
-  await user.type(screen.getByLabelText('Montant (€)'), amount)
+  await user.type(screen.getByLabelText('Titre'), 'Rien')
+  await user.type(screen.getByLabelText('Prix'), amount)
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
-  expect(await screen.findByRole('alert')).toHaveTextContent('Indique un montant superieur a 0 (ex. 12,50).')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Indique un prix superieur a 0 (ex. 12,50).')
   expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
 })
 
@@ -100,8 +100,8 @@ test('an Expense without participants is refused', async () => {
   const { user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
   await openNewExpense(user)
 
-  await user.type(screen.getByLabelText('Libelle'), 'Personne')
-  await user.type(screen.getByLabelText('Montant (€)'), '10')
+  await user.type(screen.getByLabelText('Titre'), 'Personne')
+  await user.type(screen.getByLabelText('Prix'), '10')
   const participants = within(screen.getByRole('group', { name: 'Participants' }))
   for (const name of ['Eliott', 'Lea', 'Tom']) await user.click(participants.getByRole('checkbox', { name }))
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
@@ -117,8 +117,8 @@ test.each([
   const { user } = renderApp({ loggedInAs: TOM.id, clock: clock() })
   await openNewExpense(user)
 
-  await user.type(screen.getByLabelText('Libelle'), 'Partage')
-  await user.type(screen.getByLabelText('Montant (€)'), amount)
+  await user.type(screen.getByLabelText('Titre'), 'Partage')
+  await user.type(screen.getByLabelText('Prix'), amount)
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
   expect((await expense('Partage')).getByText(shares)).toBeInTheDocument()
@@ -149,8 +149,8 @@ test('an Expense without a date is refused', async () => {
   const { user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
   await openNewExpense(user)
 
-  await user.type(screen.getByLabelText('Libelle'), 'Sans date')
-  await user.type(screen.getByLabelText('Montant (€)'), '10')
+  await user.type(screen.getByLabelText('Titre'), 'Sans date')
+  await user.type(screen.getByLabelText('Prix'), '10')
   await user.clear(screen.getByLabelText('Date'))
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
@@ -174,13 +174,13 @@ test('a Flatmate edits an Expense another Flatmate added', async () => {
   await user.click(await screen.findByRole('button', { name: 'Tricount' }))
 
   await user.click((await expense('Courses')).getByRole('button', { name: 'Modifier' }))
-  await user.clear(screen.getByLabelText('Libelle'))
-  await user.type(screen.getByLabelText('Libelle'), 'Marche')
-  await user.clear(screen.getByLabelText('Montant (€)'))
-  await user.type(screen.getByLabelText('Montant (€)'), '9,00')
+  await user.clear(screen.getByLabelText('Titre'))
+  await user.type(screen.getByLabelText('Titre'), 'Marche')
+  await user.clear(screen.getByLabelText('Prix'))
+  await user.type(screen.getByLabelText('Prix'), '9,00')
   await user.clear(screen.getByLabelText('Date'))
   await user.type(screen.getByLabelText('Date'), '2026-11-03')
-  await user.selectOptions(screen.getByLabelText('Paye par'), 'Tom')
+  await user.selectOptions(screen.getByLabelText('Acheteur'), 'Tom')
   await user.click(within(screen.getByRole('group', { name: 'Participants' })).getByRole('checkbox', { name: 'Eliott' }))
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
@@ -199,13 +199,13 @@ test('editing an Expense starts from its current values and is validated', async
   await user.click(await screen.findByRole('button', { name: 'Tricount' }))
 
   await user.click((await expense('Courses')).getByRole('button', { name: 'Modifier' }))
-  expect(screen.getByLabelText('Montant (€)')).toHaveValue('12,60')
+  expect(screen.getByLabelText('Prix')).toHaveValue('12,60')
   expect(screen.getByLabelText('Date')).toHaveValue('2026-11-04')
-  expect(screen.getByLabelText('Paye par')).toHaveDisplayValue('Lea')
-  await user.clear(screen.getByLabelText('Libelle'))
+  expect(screen.getByLabelText('Acheteur')).toHaveDisplayValue('Lea')
+  await user.clear(screen.getByLabelText('Titre'))
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
-  expect(await screen.findByRole('alert')).toHaveTextContent('Le libelle est obligatoire.')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Le titre est obligatoire.')
   expect(await backend.listExpenses()).toMatchObject([{ label: 'Courses' }])
 })
 
@@ -233,4 +233,16 @@ test('confirming the delete removes the Expense', async () => {
 
   await waitFor(() => expect(screen.queryByRole('listitem', { name: 'Courses' })).not.toBeInTheDocument())
   expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+})
+
+test('closing the Expense form saves nothing', async () => {
+  const { backend, user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
+  await openNewExpense(user)
+  await user.type(screen.getByLabelText('Titre'), 'Courses')
+  await user.type(screen.getByLabelText('Prix'), '12,60')
+
+  await user.click(screen.getByRole('button', { name: 'Annuler' }))
+
+  expect(await screen.findByRole('button', { name: 'Ajouter une depense' })).toBeInTheDocument()
+  expect(await backend.listExpenses()).toEqual([])
 })
