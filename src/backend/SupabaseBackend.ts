@@ -1,12 +1,18 @@
-import { createClient, isAuthError, isAuthRetryableFetchError, type SupabaseClient } from '@supabase/supabase-js'
-import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewRecipe, type NewSettlement, type Occupancy, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
+import { createClient, isAuthError, isAuthRetryableFetchError, StorageApiError, type SupabaseClient } from '@supabase/supabase-js'
+import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewRecipe, type NewSettlement, type Occupancy, type Photo, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
 
 /** A request that got no answer becomes a ConnectionError; an answer refusing it (or a bug) stays as it is. */
-function orConnectionError(error: { code?: string }) {
+function orConnectionError(error: { message: string; code?: string }) {
+  if (isAuthError(error)) return isAuthRetryableFetchError(error) ? new ConnectionError() : error
+  // Storage wraps every answer it got in a StorageApiError.
+  if (error instanceof StorageApiError) return error
   // PostgREST answers always carry an error code; a request that never reached it has none.
-  const unreachable = isAuthError(error) ? isAuthRetryableFetchError(error) : !error.code
-  return unreachable ? new ConnectionError() : error
+  return error.code ? error : new ConnectionError()
 }
+
+const PHOTOS = 'recipe-photos'
+/** Photos are private: shown through signed links, renewed on every reload. */
+const PHOTO_LINK_SECONDS = 30 * 24 * 60 * 60
 
 const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses', settlements: 'settlements', recipes: 'recipes' }
 
@@ -138,22 +144,43 @@ export class SupabaseBackend implements Backend {
   }
 
   async listRecipes(): Promise<Recipe[]> {
-    const { data, error } = await this.client.from('recipes').select('id, title, text, link, creator_id')
+    const { data, error } = await this.client.from('recipes').select('id, title, text, link, photo_path, creator_id')
     if (error) throw orConnectionError(error)
-    return data.map((r) => ({ id: r.id, title: r.title, text: r.text, link: r.link, creatorId: r.creator_id }))
+    const paths: string[] = data.flatMap((r) => (r.photo_path ? [r.photo_path] : []))
+    const urls = new Map<string, string>()
+    if (paths.length > 0) {
+      const signed = await this.client.storage.from(PHOTOS).createSignedUrls(paths, PHOTO_LINK_SECONDS)
+      if (signed.error) throw orConnectionError(signed.error)
+      for (const s of signed.data) if (s.path && s.signedUrl) urls.set(s.path, s.signedUrl)
+    }
+    return data.map((r) => ({
+      id: r.id,
+      title: r.title,
+      text: r.text,
+      link: r.link,
+      // A link that failed to sign shows no image, but the path stays so an edit doesn't drop the photo.
+      photo: r.photo_path ? { path: r.photo_path, url: urls.get(r.photo_path) ?? '' } : null,
+      creatorId: r.creator_id,
+    }))
   }
 
   async createRecipe(recipe: NewRecipe): Promise<void> {
     const { error } = await this.client
       .from('recipes')
-      .insert({ title: recipe.title, text: recipe.text, link: recipe.link, creator_id: recipe.creatorId })
+      .insert({
+        title: recipe.title,
+        text: recipe.text,
+        link: recipe.link,
+        photo_path: recipe.photo?.path ?? null,
+        creator_id: recipe.creatorId,
+      })
     if (error) throw orConnectionError(error)
   }
 
   async updateRecipe(id: string, changes: RecipeChanges): Promise<void> {
     const { error } = await this.client
       .from('recipes')
-      .update({ title: changes.title, text: changes.text, link: changes.link })
+      .update({ title: changes.title, text: changes.text, link: changes.link, photo_path: changes.photo?.path ?? null })
       .eq('id', id)
     if (error) throw orConnectionError(error)
   }
@@ -161,6 +188,15 @@ export class SupabaseBackend implements Backend {
   async deleteRecipe(id: string): Promise<void> {
     const { error } = await this.client.from('recipes').delete().eq('id', id)
     if (error) throw orConnectionError(error)
+  }
+
+  async uploadPhoto(file: Blob): Promise<Photo> {
+    const path = crypto.randomUUID()
+    const uploaded = await this.client.storage.from(PHOTOS).upload(path, file, { contentType: file.type })
+    if (uploaded.error) throw orConnectionError(uploaded.error)
+    const signed = await this.client.storage.from(PHOTOS).createSignedUrl(path, PHOTO_LINK_SECONDS)
+    if (signed.error) throw orConnectionError(signed.error)
+    return { path, url: signed.data.signedUrl }
   }
 
   subscribe(onChange: (topic: Topic) => void): Unsubscribe {

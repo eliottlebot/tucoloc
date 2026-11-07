@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import type { Backend, Flatmate, Recipe } from './backend/Backend'
+import type { Backend, Flatmate, Photo, Recipe } from './backend/Backend'
 import { ConfirmDialog } from './ConfirmDialog'
 import { useLive } from './useLive'
 
@@ -59,6 +59,7 @@ export function Recipes({ backend, me, flatmates }: Props) {
           .sort((a, b) => a.title.localeCompare(b.title, 'fr'))
           .map((r) => (
             <li key={r.id}>
+              {r.photo?.url && <img src={r.photo.url} alt={r.title} width={48} height={48} style={{ objectFit: 'cover' }} />}
               <button
                 onClick={() => {
                   setConfirmingDelete(false)
@@ -86,6 +87,7 @@ function RecipeView({ recipe, nameOf, onBack, onEdit, onDelete }: ViewProps) {
   return (
     <article>
       <h2>{recipe.title}</h2>
+      {recipe.photo?.url && <img src={recipe.photo.url} alt={recipe.title} style={{ maxWidth: '100%' }} />}
       {recipe.text && <p style={{ whiteSpace: 'pre-wrap' }}>{recipe.text}</p>}
       {recipe.link && (
         <p>
@@ -114,6 +116,9 @@ function RecipeForm({ backend, me, editing, onDone }: FormProps) {
   const [title, setTitle] = useState(editing?.title ?? '')
   const [text, setText] = useState(editing?.text ?? '')
   const [link, setLink] = useState(editing?.link ?? '')
+  // The photo kept from before, until a new file replaces it or it is removed.
+  const [photo, setPhoto] = useState<Photo | null>(editing?.photo ?? null)
+  const [newPhoto, setNewPhoto] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -124,7 +129,12 @@ function RecipeForm({ backend, me, editing, onDone }: FormProps) {
     if (link.trim() && !/^https?:\/\//.test(link.trim()))
       return setError('Le lien doit commencer par http:// ou https://.')
     setSaving(true)
-    const changes = { title: title.trim(), text: text.trim(), link: link.trim() || null }
+    const changes = {
+      title: title.trim(),
+      text: text.trim(),
+      link: link.trim() || null,
+      photo: newPhoto ? await backend.uploadPhoto(newPhoto) : photo,
+    }
     if (editing) await backend.updateRecipe(editing.id, changes)
     else await backend.createRecipe({ ...changes, creatorId: me.id })
     onDone()
@@ -143,6 +153,18 @@ function RecipeForm({ backend, me, editing, onDone }: FormProps) {
       <label>
         Lien
         <input inputMode="url" value={link} onChange={(e) => setLink(e.target.value)} />
+      </label>
+      {photo && !newPhoto && (
+        <p>
+          <img src={photo.url} alt="Photo actuelle" width={96} />
+          <button type="button" onClick={() => setPhoto(null)}>
+            Retirer la photo
+          </button>
+        </p>
+      )}
+      <label>
+        Photo
+        <input type="file" accept="image/*" onChange={(e) => setNewPhoto(e.target.files?.[0] ?? null)} />
       </label>
       {error && <p role="alert">{error}</p>}
       <button type="submit" disabled={saving}>
