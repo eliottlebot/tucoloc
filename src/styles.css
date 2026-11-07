@@ -640,8 +640,8 @@ p.offline-banner {
   background: var(--card);
 }
 
-.shopping-item.bought {
-  background: var(--free);
+.shopping-item.bought .shopping-name {
+  text-decoration: line-through;
 }
 
 /* One line; a long name ends with an ellipsis. */
