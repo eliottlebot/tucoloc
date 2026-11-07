@@ -12,6 +12,9 @@ export class InvalidCredentialsError extends Error {}
 /** The account exists but has no Flatmate row, so the app can't use it. */
 export class MissingFlatmateError extends Error {}
 
+/** The server couldn't be reached, so the call didn't happen. */
+export class ConnectionError extends Error {}
+
 /** A calendar day, 'YYYY-MM-DD'. */
 export type Day = string
 

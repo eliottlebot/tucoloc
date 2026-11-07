@@ -1,5 +1,12 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewSettlement, type Occupancy, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
+import { createClient, isAuthError, isAuthRetryableFetchError, type SupabaseClient } from '@supabase/supabase-js'
+import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewSettlement, type Occupancy, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
+
+/** A request that got no answer becomes a ConnectionError; an answer refusing it (or a bug) stays as it is. */
+function orConnectionError(error: { code?: string }) {
+  // PostgREST answers always carry an error code; a request that never reached it has none.
+  const unreachable = isAuthError(error) ? isAuthRetryableFetchError(error) : !error.code
+  return unreachable ? new ConnectionError() : error
+}
 
 const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses', settlements: 'settlements' }
 
@@ -14,49 +21,49 @@ export class SupabaseBackend implements Backend {
 
   async getSession(): Promise<Session | null> {
     const { data, error } = await this.client.auth.getSession()
-    if (error) throw error
+    if (error) throw orConnectionError(error)
     return data.session ? this.sessionFor(data.session.user.id) : null
   }
 
   async login(email: string, password: string): Promise<Session> {
     const { data, error } = await this.client.auth.signInWithPassword({ email, password })
     if (error?.code === 'invalid_credentials') throw new InvalidCredentialsError()
-    if (error) throw error
+    if (error) throw orConnectionError(error)
     return this.sessionFor(data.user.id)
   }
 
   async logout(): Promise<void> {
     const { error } = await this.client.auth.signOut()
-    if (error) throw error
+    if (error) throw orConnectionError(error)
   }
 
   async listFlatmates(): Promise<Flatmate[]> {
     const { data, error } = await this.client.from('flatmates').select('id, name').order('name')
-    if (error) throw error
+    if (error) throw orConnectionError(error)
     return data
   }
 
   async listOccupancies(): Promise<Occupancy[]> {
     const { data, error } = await this.client.from('rooms').select('id, flatmate_id, since').not('flatmate_id', 'is', null)
-    if (error) throw error
+    if (error) throw orConnectionError(error)
     return data.map((r) => ({ room: r.id as RoomId, flatmateId: r.flatmate_id, since: new Date(r.since) }))
   }
 
   async occupy(room: RoomId, flatmateId: string, since: Date): Promise<void> {
     const { error } = await this.client.from('rooms').update({ flatmate_id: flatmateId, since: since.toISOString() }).eq('id', room)
-    if (error) throw error
+    if (error) throw orConnectionError(error)
   }
 
   async free(room: RoomId): Promise<void> {
     const { error } = await this.client.from('rooms').update({ flatmate_id: null, since: null }).eq('id', room)
-    if (error) throw error
+    if (error) throw orConnectionError(error)
   }
 
   async listExpenses(): Promise<Expense[]> {
     const { data, error } = await this.client
       .from('expenses')
       .select('id, label, amount_cents, date, payer_id, participant_ids, creator_id, created_at')
-    if (error) throw error
+    if (error) throw orConnectionError(error)
     return data.map((e) => ({
       id: e.id,
       label: e.label,
@@ -79,7 +86,7 @@ export class SupabaseBackend implements Backend {
       creator_id: expense.creatorId,
       created_at: expense.createdAt.toISOString(),
     })
-    if (error) throw error
+    if (error) throw orConnectionError(error)
   }
 
   async updateExpense(id: string, changes: ExpenseChanges): Promise<void> {
@@ -93,17 +100,17 @@ export class SupabaseBackend implements Backend {
         participant_ids: changes.participantIds,
       })
       .eq('id', id)
-    if (error) throw error
+    if (error) throw orConnectionError(error)
   }
 
   async deleteExpense(id: string): Promise<void> {
     const { error } = await this.client.from('expenses').delete().eq('id', id)
-    if (error) throw error
+    if (error) throw orConnectionError(error)
   }
 
   async listSettlements(): Promise<Settlement[]> {
     const { data, error } = await this.client.from('settlements').select('id, created_at, creator_id, transfers')
-    if (error) throw error
+    if (error) throw orConnectionError(error)
     return data.map((s) => ({
       id: s.id,
       createdAt: new Date(s.created_at),
@@ -122,12 +129,12 @@ export class SupabaseBackend implements Backend {
       creator_id: settlement.creatorId,
       transfers: settlement.transfers.map((t) => ({ from_id: t.fromId, to_id: t.toId, amount_cents: t.cents })),
     })
-    if (error) throw error
+    if (error) throw orConnectionError(error)
   }
 
   async deleteSettlement(id: string): Promise<void> {
     const { error } = await this.client.from('settlements').delete().eq('id', id)
-    if (error) throw error
+    if (error) throw orConnectionError(error)
   }
 
   subscribe(onChange: (topic: Topic) => void): Unsubscribe {
@@ -145,7 +152,7 @@ export class SupabaseBackend implements Backend {
 
   private async sessionFor(userId: string): Promise<Session> {
     const { data, error } = await this.client.from('flatmates').select('id, name').eq('id', userId).maybeSingle()
-    if (error) throw error
+    if (error) throw orConnectionError(error)
     if (!data) {
       await this.client.auth.signOut()
       throw new MissingFlatmateError()

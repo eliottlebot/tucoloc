@@ -15,6 +15,7 @@ Deploy: Vercel builds `main` on every push. Database changes: SQL files in `supa
 ## Architecture
 
 - All server access goes through the `Backend` interface (`src/backend/Backend.ts`): `SupabaseBackend` in production, `InMemoryBackend` in tests. UI code never imports Supabase.
+- No connection: a Backend call that gets no answer throws `ConnectionError`. `App` wraps the Backend in `watchConnection`, which turns that into the "Pas de connexion" banner and a call that never settles, so features need no error handling for it. Other errors pass through. In tests, `backend.goOffline()` / `goOnline()`.
 - Live updates: `Backend.subscribe` reports a changed `Topic`; components read data through `useLive`, which reloads on that topic.
 - Time comes from the injected `Clock`, never `new Date()` or `setTimeout` in features: `clock.now()` reads it, `clock.at(time, callback)` waits for it. In tests, `testClock(start).advance(ms)` moves time and runs what falls due (wrap in `act`).
 - Every delete, and recording a Settlement, asks first through the shared `ConfirmDialog` (`src/ConfirmDialog.tsx`).
