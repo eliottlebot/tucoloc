@@ -4,7 +4,9 @@ import type { Clock } from './clock'
 import { ConfirmDelete } from './ConfirmDelete'
 import { useLive } from './useLive'
 
-const formatEuros = (cents: number) => (cents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
+/** "12,50 €"; with signDisplay 'exceptZero', "+12,50 €" and "-12,50 €". */
+const formatEuros = (cents: number, signDisplay: Intl.NumberFormatOptions['signDisplay'] = 'auto') =>
+  (cents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', signDisplay })
 
 /** Cents as form input text: "12,50", without the € sign. */
 const toAmountInput = (cents: number) => (cents / 100).toFixed(2).replace('.', ',')
@@ -33,6 +35,34 @@ function splitEqually(amountCents: number, participantIds: string[]) {
   return ids.map((flatmateId, i) => ({ flatmateId, cents: base + (i < leftover ? 1 : 0) }))
 }
 
+/** Per Flatmate, in cents: what they paid minus their shares. Positive is owed, negative owes; they sum to zero. */
+function balances(expenses: Expense[], flatmates: Flatmate[]) {
+  const cents = new Map(flatmates.map((f) => [f.id, 0]))
+  for (const e of expenses) {
+    cents.set(e.payerId, cents.get(e.payerId)! + e.amountCents)
+    for (const s of splitEqually(e.amountCents, e.participantIds)) cents.set(s.flatmateId, cents.get(s.flatmateId)! - s.cents)
+  }
+  return flatmates.map((f) => ({ flatmateId: f.id, cents: cents.get(f.id)! }))
+}
+
+/**
+ * Transfers that zero every Balance: the largest debtor pays the largest creditor, until none is left.
+ * With three Flatmates that is at most two transfers. Ties go to the first in Flatmate order.
+ */
+function suggestedTransfers(perFlatmate: { flatmateId: string; cents: number }[]) {
+  const left = perFlatmate.map((b) => ({ ...b }))
+  const transfers: { fromId: string; toId: string; cents: number }[] = []
+  for (;;) {
+    const debtor = left.reduce((a, b) => (b.cents < a.cents ? b : a))
+    const creditor = left.reduce((a, b) => (b.cents > a.cents ? b : a))
+    if (debtor.cents === 0) return transfers
+    const cents = Math.min(-debtor.cents, creditor.cents)
+    transfers.push({ fromId: debtor.flatmateId, toId: creditor.flatmateId, cents })
+    debtor.cents += cents
+    creditor.cents -= cents
+  }
+}
+
 /** Newest date first; same date, last entered first. */
 const newestFirst = (a: Expense, b: Expense) =>
   b.date.localeCompare(a.date) || b.createdAt.getTime() - a.createdAt.getTime()
@@ -50,6 +80,7 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
 
   return (
     <>
+      <Balances expenses={expenses} flatmates={flatmates} nameOf={nameOf} />
       {form === 'closed' ? (
         <button onClick={() => setForm('new')}>Ajouter une dépense</button>
       ) : (
@@ -86,6 +117,38 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
         />
       )}
     </>
+  )
+}
+
+type BalancesProps = { expenses: Expense[]; flatmates: Flatmate[]; nameOf: (id: string) => string }
+
+function Balances({ expenses, flatmates, nameOf }: BalancesProps) {
+  const perFlatmate = balances(expenses, flatmates)
+  const transfers = suggestedTransfers(perFlatmate)
+  return (
+    <section>
+      <h2>Soldes</h2>
+      <table>
+        <tbody>
+          {perFlatmate.map((b) => (
+            <tr key={b.flatmateId}>
+              <th scope="row">{nameOf(b.flatmateId)}</th>
+              <td>{formatEuros(b.cents, 'exceptZero')}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <h2>Virements suggérés</h2>
+      {transfers.length === 0 ? (
+        <p>Tout le monde est à jour.</p>
+      ) : (
+        transfers.map((t) => (
+          <p key={t.fromId + t.toId}>
+            {nameOf(t.fromId)} doit {formatEuros(t.cents)} à {nameOf(t.toId)}
+          </p>
+        ))
+      )}
+    </section>
   )
 }
 
