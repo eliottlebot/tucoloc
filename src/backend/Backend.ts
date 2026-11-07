@@ -31,8 +31,16 @@ export type NewExpense = Omit<Expense, 'id'>
 /** What editing an Expense can change; the creator and creation time stay. */
 export type ExpenseChanges = Pick<Expense, 'label' | 'amountCents' | 'date' | 'payerId' | 'participantIds'>
 
+/** One Flatmate paying another back. */
+export type Transfer = { fromId: string; toId: string; cents: number }
+
+/** Everyone paid the suggested transfers; every Expense created before createdAt is settled. */
+export type Settlement = { id: string; createdAt: Date; creatorId: string; transfers: Transfer[] }
+
+export type NewSettlement = Omit<Settlement, 'id'>
+
 /** What kind of data changed; listeners refetch that data. */
-export type Topic = 'flatmates' | 'occupancies' | 'expenses'
+export type Topic = 'flatmates' | 'occupancies' | 'expenses' | 'settlements'
 
 export type Unsubscribe = () => void
 
@@ -51,6 +59,9 @@ export interface Backend {
   createExpense(expense: NewExpense): Promise<void>
   updateExpense(id: string, changes: ExpenseChanges): Promise<void>
   deleteExpense(id: string): Promise<void>
+  listSettlements(): Promise<Settlement[]>
+  createSettlement(settlement: NewSettlement): Promise<void>
+  deleteSettlement(id: string): Promise<void>
   /** Calls onChange whenever data changes, on this device or another one. */
   subscribe(onChange: (topic: Topic) => void): Unsubscribe
 }
