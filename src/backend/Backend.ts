@@ -12,8 +12,24 @@ export class InvalidCredentialsError extends Error {}
 /** The account exists but has no Flatmate row, so the app can't use it. */
 export class MissingFlatmateError extends Error {}
 
+/** A calendar day, 'YYYY-MM-DD'. */
+export type Day = string
+
+export type Expense = {
+  id: string
+  label: string
+  amountCents: number
+  date: Day
+  payerId: string
+  participantIds: string[]
+  creatorId: string
+  createdAt: Date
+}
+
+export type NewExpense = Omit<Expense, 'id'>
+
 /** What kind of data changed; listeners refetch that data. */
-export type Topic = 'flatmates' | 'occupancies'
+export type Topic = 'flatmates' | 'occupancies' | 'expenses'
 
 export type Unsubscribe = () => void
 
@@ -28,6 +44,8 @@ export interface Backend {
   listOccupancies(): Promise<Occupancy[]>
   occupy(room: RoomId, flatmateId: string, since: Date): Promise<void>
   free(room: RoomId): Promise<void>
+  listExpenses(): Promise<Expense[]>
+  createExpense(expense: NewExpense): Promise<void>
   /** Calls onChange whenever data changes, on this device or another one. */
   subscribe(onChange: (topic: Topic) => void): Unsubscribe
 }

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Session } from './backend/Backend'
 import { useLive } from './useLive'
 import { Rooms } from './Rooms'
+import { Expenses } from './Expenses'
 import type { Clock } from './clock'
 
 type Props = { backend: Backend; clock: Clock }
@@ -97,6 +98,7 @@ function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: 
       </div>
       <div role="tabpanel" aria-label={tab}>
         {tab === 'Pièces' && <Rooms backend={backend} clock={clock} me={me} flatmates={flatmates} />}
+        {tab === 'Dépenses' && <Expenses backend={backend} clock={clock} me={me} flatmates={flatmates} />}
       </div>
     </div>
   )
