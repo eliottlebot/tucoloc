@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Session } from './backend/Backend'
+import { watchConnection } from './backend/watchConnection'
 import { useLive } from './useLive'
 import { Rooms } from './Rooms'
 import { Expenses } from './Expenses'
@@ -9,7 +10,9 @@ type Props = { backend: Backend; clock: Clock }
 
 const MISSING_FLATMATE_MESSAGE = "Ce compte n'est pas encore configuré dans Tucoloc."
 
-export function App({ backend, clock }: Props) {
+export function App({ backend: server, clock }: Props) {
+  const [connected, setConnected] = useState(true)
+  const backend = useMemo(() => watchConnection(server, setConnected), [server])
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   const [startupError, setStartupError] = useState<string | null>(null)
 
@@ -21,24 +24,31 @@ export function App({ backend, clock }: Props) {
     })
   }, [backend])
 
-  if (session === undefined) return null
+  let screen: ReactNode = null
   if (session === null) {
     const onLogin = (s: Session) => {
       setStartupError(null)
       setSession(s)
     }
-    return <LoginScreen backend={backend} initialError={startupError} onLogin={onLogin} />
+    screen = <LoginScreen backend={backend} initialError={startupError} onLogin={onLogin} />
+  } else if (session) {
+    screen = (
+      <Home
+        backend={backend}
+        clock={clock}
+        session={session}
+        onLogout={async () => {
+          await backend.logout()
+          setSession(null)
+        }}
+      />
+    )
   }
   return (
-    <Home
-      backend={backend}
-      clock={clock}
-      session={session}
-      onLogout={async () => {
-        await backend.logout()
-        setSession(null)
-      }}
-    />
+    <>
+      {!connected && <p role="alert">Pas de connexion. Réessaie quand le réseau revient.</p>}
+      {screen}
+    </>
   )
 }
 
