@@ -66,8 +66,13 @@ export type RecipeChanges = Pick<Recipe, 'title' | 'text' | 'link' | 'photo' | '
 /** Tonight's dish for the whole Flatshare: a Recipe or free text, exactly one of the two. */
 export type Meal = { recipeId: string | null; text: string | null; setBy: string; setAt: Date }
 
+/** A line of the shared Shopping List; boughtAt is null while it is still to buy. */
+export type ShoppingItem = { id: string; name: string; addedAt: Date; boughtAt: Date | null }
+
+export type NewShoppingItem = Pick<ShoppingItem, 'name' | 'addedAt'>
+
 /** What kind of data changed; listeners refetch that data. */
-export type Topic = 'flatmates' | 'occupancies' | 'expenses' | 'settlements' | 'recipes' | 'meal'
+export type Topic = 'flatmates' | 'occupancies' | 'expenses' | 'settlements' | 'recipes' | 'meal' | 'shopping'
 
 export type Unsubscribe = () => void
 
@@ -100,6 +105,13 @@ export interface Backend {
   /** Replaces the Meal. */
   setMeal(meal: Meal): Promise<void>
   clearMeal(): Promise<void>
+  listShoppingItems(): Promise<ShoppingItem[]>
+  addShoppingItem(item: NewShoppingItem): Promise<void>
+  /** boughtAt null puts the Item back to buy. */
+  setShoppingItemBought(id: string, boughtAt: Date | null): Promise<void>
+  deleteShoppingItem(id: string): Promise<void>
+  /** Removes every bought Item; the ones still to buy stay. */
+  clearBoughtShoppingItems(): Promise<void>
   /** Calls onChange whenever data changes, on this device or another one. */
   subscribe(onChange: (topic: Topic) => void): Unsubscribe
 }

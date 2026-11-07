@@ -36,3 +36,11 @@ How much a Flatmate is owed (positive) or owes (negative) across all Expenses si
 **Settlement**:
 The moment the Flatmates pay each other the suggested transfers and reset every Balance to zero, all at once. Settles every Expense created before it.
 _Avoid_: Reimbursement, remboursement, payback (partial or per-expense paybacks don't exist)
+
+**Shopping List**:
+The one list of things to buy, shared by the whole Flatshare. Items still to buy come first; bought ones go last until the Flatmates clear them.
+_Avoid_: Liste d'achats
+
+**Item**:
+One line of the Shopping List: a name (a quantity is just part of it), to buy or bought.
+_Avoid_: Ingredient, produit, article de courses

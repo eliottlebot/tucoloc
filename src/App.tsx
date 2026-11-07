@@ -5,7 +5,8 @@ import { useLive } from './useLive'
 import { HomeScreen } from './HomeScreen'
 import { Expenses } from './Expenses'
 import { Recipes } from './Recipes'
-import { LogOutIcon, SaladIcon, ScaleIcon } from './icons'
+import { LogOutIcon, SaladIcon, ScaleIcon, ScrollTextIcon } from './icons'
+import { ShoppingList } from './ShoppingList'
 import type { Clock } from './clock'
 
 type Props = { backend: Backend; clock: Clock }
@@ -90,8 +91,8 @@ function LoginScreen({ backend, initialError, onLogin }: LoginProps) {
   )
 }
 
-/** The home screen (tonight's Meal, Rooms), and the two screens of the bottom bar: Tricount (Expenses) and Recettes (Recipes). */
-type Screen = 'home' | 'expenses' | 'recipes'
+/** The home screen (tonight's Meal, Rooms), and the screens of the bottom bar: Tricount (Expenses), Recettes (Recipes), Courses (Shopping List). */
+type Screen = 'home' | 'expenses' | 'recipes' | 'shopping'
 
 function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: Clock; session: Session; onLogout: () => void }) {
   const [screen, setScreen] = useState<Screen>('home')
@@ -112,6 +113,7 @@ function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: 
         {screen === 'home' && <HomeScreen backend={backend} clock={clock} me={me} flatmates={flatmates} />}
         {screen === 'expenses' && <Expenses backend={backend} clock={clock} me={me} flatmates={flatmates} />}
         {screen === 'recipes' && <Recipes backend={backend} clock={clock} me={me} flatmates={flatmates} />}
+        {screen === 'shopping' && <ShoppingList backend={backend} clock={clock} />}
       </main>
       <nav className="bottom-bar" aria-label="Navigation">
         <button aria-label="Tricount" aria-current={screen === 'expenses'} onClick={() => setScreen('expenses')}>
@@ -119,6 +121,9 @@ function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: 
         </button>
         <button aria-label="Recettes" aria-current={screen === 'recipes'} onClick={() => setScreen('recipes')}>
           <SaladIcon />
+        </button>
+        <button aria-label="Courses" aria-current={screen === 'shopping'} onClick={() => setScreen('shopping')}>
+          <ScrollTextIcon />
         </button>
       </nav>
     </>
