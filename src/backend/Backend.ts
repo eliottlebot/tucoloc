@@ -45,13 +45,23 @@ export type NewSettlement = Omit<Settlement, 'id'>
 /** A Recipe photo: where it is stored, and an address to show it. */
 export type Photo = { path: string; url: string }
 
-/** A dish we like; link and photo are null when it has none. */
-export type Recipe = { id: string; title: string; text: string; link: string | null; photo: Photo | null; creatorId: string }
+/** A dish we like; link and photo are null when it has none. Nutrition values: whole grams per portion, null when not given. */
+export type Recipe = {
+  id: string
+  title: string
+  text: string
+  link: string | null
+  photo: Photo | null
+  proteins: number | null
+  carbs: number | null
+  fats: number | null
+  creatorId: string
+}
 
 export type NewRecipe = Omit<Recipe, 'id'>
 
 /** What editing a Recipe can change; the creator stays. */
-export type RecipeChanges = Pick<Recipe, 'title' | 'text' | 'link' | 'photo'>
+export type RecipeChanges = Pick<Recipe, 'title' | 'text' | 'link' | 'photo' | 'proteins' | 'carbs' | 'fats'>
 
 /** Tonight's dish for the whole Flatshare: a Recipe or free text, exactly one of the two. */
 export type Meal = { recipeId: string | null; text: string | null; setBy: string; setAt: Date }

@@ -4,7 +4,7 @@ import { ELIOTT, LEA, renderApp, testClock } from './render'
 
 const HOUR = 60 * 60 * 1000
 
-const LEAS_CURRY: NewRecipe = { title: 'Curry', text: 'Lait de coco', link: null, photo: null, creatorId: LEA.id }
+const LEAS_CURRY: NewRecipe = { title: 'Curry', text: 'Lait de coco', link: null, photo: null, proteins: null, carbs: null, fats: null, creatorId: LEA.id }
 
 const tonight = () => within(screen.getByRole('region', { name: 'Ce soir' }))
 
