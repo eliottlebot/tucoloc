@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import type { Backend, Flatmate, Photo, Recipe } from './backend/Backend'
+import type { Clock } from './clock'
 import { ConfirmDialog } from './ConfirmDialog'
+import { TonightsMeal } from './Meal'
 import { useLive } from './useLive'
 
-type Props = { backend: Backend; me: Flatmate; flatmates: Flatmate[] | undefined }
+type Props = { backend: Backend; clock: Clock; me: Flatmate; flatmates: Flatmate[] | undefined }
 
-export function Recipes({ backend, me, flatmates }: Props) {
+export function Recipes({ backend, clock, me, flatmates }: Props) {
   const recipes = useLive(backend, 'recipes', () => backend.listRecipes())
   // The form is closed, adding a new Recipe, or editing this one.
   const [form, setForm] = useState<'closed' | 'new' | Recipe>('closed')
@@ -15,6 +17,10 @@ export function Recipes({ backend, me, flatmates }: Props) {
   if (!recipes || !flatmates) return null
 
   const nameOf = (id: string) => flatmates.find((f) => f.id === id)!.name
+  const openRecipeById = (id: string) => {
+    setConfirmingDelete(false)
+    setOpenId(id)
+  }
   // Looked up live, so a Recipe deleted on another phone closes here too.
   const openRecipe = recipes.find((r) => r.id === openId)
 
@@ -36,6 +42,10 @@ export function Recipes({ backend, me, flatmates }: Props) {
           onBack={() => setOpenId(null)}
           onEdit={() => setForm(openRecipe)}
           onDelete={() => setConfirmingDelete(true)}
+          onChooseForTonight={async () => {
+            setOpenId(null)
+            await backend.setMeal({ recipeId: openRecipe.id, text: null, setBy: me.id, setAt: clock.now() })
+          }}
         />
         {confirmingDelete && (
           <ConfirmDialog
@@ -53,6 +63,7 @@ export function Recipes({ backend, me, flatmates }: Props) {
 
   return (
     <>
+      <TonightsMeal backend={backend} clock={clock} me={me} recipes={recipes} nameOf={nameOf} onOpenRecipe={openRecipeById} />
       <button onClick={() => setForm('new')}>Ajouter une recette</button>
       <ul aria-label="Recettes">
         {[...recipes]
@@ -60,14 +71,7 @@ export function Recipes({ backend, me, flatmates }: Props) {
           .map((r) => (
             <li key={r.id}>
               {r.photo?.url && <img src={r.photo.url} alt={r.title} width={48} height={48} style={{ objectFit: 'cover' }} />}
-              <button
-                onClick={() => {
-                  setConfirmingDelete(false)
-                  setOpenId(r.id)
-                }}
-              >
-                {r.title}
-              </button>
+              <button onClick={() => openRecipeById(r.id)}>{r.title}</button>
             </li>
           ))}
       </ul>
@@ -81,9 +85,10 @@ type ViewProps = {
   onBack: () => void
   onEdit: () => void
   onDelete: () => void
+  onChooseForTonight: () => void
 }
 
-function RecipeView({ recipe, nameOf, onBack, onEdit, onDelete }: ViewProps) {
+function RecipeView({ recipe, nameOf, onBack, onEdit, onDelete, onChooseForTonight }: ViewProps) {
   return (
     <article>
       <h2>{recipe.title}</h2>
@@ -98,6 +103,7 @@ function RecipeView({ recipe, nameOf, onBack, onEdit, onDelete }: ViewProps) {
       )}
       <p>Ajoutée par {nameOf(recipe.creatorId)}</p>
       <button onClick={onBack}>Retour</button>
+      <button onClick={onChooseForTonight}>Choisir pour ce soir</button>
       <button onClick={onEdit}>Modifier</button>
       <button onClick={onDelete}>Supprimer</button>
     </article>
