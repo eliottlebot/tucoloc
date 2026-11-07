@@ -1,4 +1,4 @@
-import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type Meal, type NewExpense, type NewRecipe, type NewSettlement, type Occupancy, type Photo, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
+import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type Meal, type NewExpense, type NewRecipe, type NewSettlement, type NewShoppingItem, type Occupancy, type Photo, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type ShoppingItem, type Topic, type Unsubscribe } from './Backend'
 
 /** An account without a name has no Flatmate row. */
 type Account = { id: string; name?: string; email: string; password: string }
@@ -14,6 +14,8 @@ export class InMemoryBackend implements Backend {
   private recipeCount = 0
   private photoCount = 0
   private meal: Meal | null = null
+  private shoppingItems: ShoppingItem[] = []
+  private shoppingItemCount = 0
   private listeners = new Set<(topic: Topic) => void>()
   private offline = false
 
@@ -164,6 +166,35 @@ export class InMemoryBackend implements Backend {
     this.failIfOffline()
     this.meal = null
     this.emit('meal')
+  }
+
+  async listShoppingItems(): Promise<ShoppingItem[]> {
+    this.failIfOffline()
+    return [...this.shoppingItems]
+  }
+
+  async addShoppingItem(item: NewShoppingItem): Promise<void> {
+    this.failIfOffline()
+    this.shoppingItems = [...this.shoppingItems, { ...item, id: `item-${++this.shoppingItemCount}`, boughtAt: null }]
+    this.emit('shopping')
+  }
+
+  async setShoppingItemBought(id: string, boughtAt: Date | null): Promise<void> {
+    this.failIfOffline()
+    this.shoppingItems = this.shoppingItems.map((i) => (i.id === id ? { ...i, boughtAt } : i))
+    this.emit('shopping')
+  }
+
+  async deleteShoppingItem(id: string): Promise<void> {
+    this.failIfOffline()
+    this.shoppingItems = this.shoppingItems.filter((i) => i.id !== id)
+    this.emit('shopping')
+  }
+
+  async clearBoughtShoppingItems(): Promise<void> {
+    this.failIfOffline()
+    this.shoppingItems = this.shoppingItems.filter((i) => i.boughtAt === null)
+    this.emit('shopping')
   }
 
   subscribe(onChange: (topic: Topic) => void): Unsubscribe {

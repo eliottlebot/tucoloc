@@ -1,5 +1,5 @@
 import { createClient, isAuthError, isAuthRetryableFetchError, StorageApiError, type SupabaseClient } from '@supabase/supabase-js'
-import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type Meal, type NewExpense, type NewRecipe, type NewSettlement, type Occupancy, type Photo, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
+import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type Meal, type NewExpense, type NewRecipe, type NewSettlement, type NewShoppingItem, type Occupancy, type Photo, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type ShoppingItem, type Topic, type Unsubscribe } from './Backend'
 
 /** A request that got no answer becomes a ConnectionError; an answer refusing it (or a bug) stays as it is. */
 function orConnectionError(error: { message: string; code?: string }) {
@@ -14,7 +14,7 @@ const PHOTOS = 'recipe-photos'
 /** Photos are private: shown through signed links, renewed on every reload. */
 const PHOTO_LINK_SECONDS = 30 * 24 * 60 * 60
 
-const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses', settlements: 'settlements', recipes: 'recipes', meal: 'meal' }
+const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses', settlements: 'settlements', recipes: 'recipes', meal: 'meal', shopping_items: 'shopping' }
 
 export class SupabaseBackend implements Backend {
   private client: SupabaseClient
@@ -232,6 +232,40 @@ export class SupabaseBackend implements Backend {
 
   async clearMeal(): Promise<void> {
     const { error } = await this.client.from('meal').delete().eq('id', true)
+    if (error) throw orConnectionError(error)
+  }
+
+  async listShoppingItems(): Promise<ShoppingItem[]> {
+    const { data, error } = await this.client.from('shopping_items').select('id, name, added_at, bought_at')
+    if (error) throw orConnectionError(error)
+    return data.map((i) => ({
+      id: i.id,
+      name: i.name,
+      addedAt: new Date(i.added_at),
+      boughtAt: i.bought_at ? new Date(i.bought_at) : null,
+    }))
+  }
+
+  async addShoppingItem(item: NewShoppingItem): Promise<void> {
+    const { error } = await this.client.from('shopping_items').insert({ name: item.name, added_at: item.addedAt.toISOString() })
+    if (error) throw orConnectionError(error)
+  }
+
+  async setShoppingItemBought(id: string, boughtAt: Date | null): Promise<void> {
+    const { error } = await this.client
+      .from('shopping_items')
+      .update({ bought_at: boughtAt?.toISOString() ?? null })
+      .eq('id', id)
+    if (error) throw orConnectionError(error)
+  }
+
+  async deleteShoppingItem(id: string): Promise<void> {
+    const { error } = await this.client.from('shopping_items').delete().eq('id', id)
+    if (error) throw orConnectionError(error)
+  }
+
+  async clearBoughtShoppingItems(): Promise<void> {
+    const { error } = await this.client.from('shopping_items').delete().not('bought_at', 'is', null)
     if (error) throw orConnectionError(error)
   }
 

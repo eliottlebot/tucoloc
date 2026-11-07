@@ -133,7 +133,7 @@ p[role='alert'] {
   padding: 0;
 }
 
-/* Bottom bar: two yellow buttons, on every screen. */
+/* Bottom bar: the yellow buttons to the other screens, on every screen. */
 .bottom-bar {
   position: fixed;
   left: 0;
@@ -141,7 +141,7 @@ p[role='alert'] {
   bottom: 0;
   display: flex;
   justify-content: center;
-  gap: 64px;
+  gap: 22px;
   padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
   background: linear-gradient(transparent, var(--background) 30%);
 }
@@ -596,4 +596,54 @@ p.offline-banner {
   align-items: center;
   font-size: 24px;
   margin: 6px 0;
+}
+
+/* Courses: the shared Shopping List. */
+.shopping-clear {
+  width: 100%;
+}
+
+.shopping-add {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.shopping-add input {
+  margin-top: 0;
+  font-size: 24px;
+}
+
+.shopping-add input::placeholder {
+  color: #c3c3c3;
+}
+
+.shopping-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--on-card);
+}
+
+.shopping-item.bought {
+  background: var(--free);
+}
+
+/* One line; a long name ends with an ellipsis. */
+.shopping-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 24px;
+  color: var(--on-card);
+  background: none;
+  padding: 0;
+  text-align: left;
 }
