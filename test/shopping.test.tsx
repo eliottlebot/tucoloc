@@ -106,3 +106,18 @@ test('"all bought" asks first, then removes only the bought Items', async () => 
   await waitFor(() => expect(items()).toEqual(['Viande']))
   expect(clear()).toBeDisabled()
 })
+
+test('a line separates the Items to buy from the bought ones, only when there are both', async () => {
+  const { user, clock } = await openShopping()
+  await addAll(user, clock, 'Salade', 'Viande')
+  expect(screen.queryByRole('separator')).not.toBeInTheDocument()
+
+  await buy(user, 'Salade')
+
+  const separator = screen.getByRole('separator')
+  expect(separator.previousElementSibling).toHaveAccessibleName('Viande')
+  expect(separator.nextElementSibling).toHaveAccessibleName('Salade')
+
+  await buy(user, 'Viande')
+  expect(screen.queryByRole('separator')).not.toBeInTheDocument()
+})

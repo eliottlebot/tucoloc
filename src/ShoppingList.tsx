@@ -46,7 +46,9 @@ export function ShoppingList({ backend, clock }: Props) {
         </button>
       </form>
       <ul className="card-list" aria-label="Liste de courses">
-        {[...items].sort(shoppingOrder).map((item) => (
+        {[...items].sort(shoppingOrder).map((item, i, sorted) => [
+          // A blue line between the Items to buy and the bought ones, when there are both.
+          item.boughtAt && i > 0 && !sorted[i - 1].boughtAt && <li key="separator" role="separator" className="shopping-separator" />,
           <li key={item.id} aria-label={item.name} className={item.boughtAt ? 'shopping-item bought' : 'shopping-item'}>
             <button className="card-icon" aria-label="Supprimer" onClick={() => backend.deleteShoppingItem(item.id)}>
               <CircleXIcon />
@@ -67,8 +69,8 @@ export function ShoppingList({ backend, clock }: Props) {
                 </button>
               </>
             )}
-          </li>
-        ))}
+          </li>,
+        ])}
       </ul>
       {confirmingClear && (
         <ConfirmDialog

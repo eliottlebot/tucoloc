@@ -633,6 +633,13 @@ p.offline-banner {
   color: var(--on-card);
 }
 
+.shopping-separator {
+  height: 3px;
+  margin: 4px 0 16px;
+  border-radius: 2px;
+  background: var(--card);
+}
+
 .shopping-item.bought {
   background: var(--free);
 }
