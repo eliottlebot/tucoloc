@@ -1,5 +1,5 @@
 import { createClient, isAuthError, isAuthRetryableFetchError, type SupabaseClient } from '@supabase/supabase-js'
-import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewSettlement, type Occupancy, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
+import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewRecipe, type NewSettlement, type Occupancy, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
 
 /** A request that got no answer becomes a ConnectionError; an answer refusing it (or a bug) stays as it is. */
 function orConnectionError(error: { code?: string }) {
@@ -8,7 +8,7 @@ function orConnectionError(error: { code?: string }) {
   return unreachable ? new ConnectionError() : error
 }
 
-const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses', settlements: 'settlements' }
+const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses', settlements: 'settlements', recipes: 'recipes' }
 
 export class SupabaseBackend implements Backend {
   private client: SupabaseClient
@@ -134,6 +134,32 @@ export class SupabaseBackend implements Backend {
 
   async deleteSettlement(id: string): Promise<void> {
     const { error } = await this.client.from('settlements').delete().eq('id', id)
+    if (error) throw orConnectionError(error)
+  }
+
+  async listRecipes(): Promise<Recipe[]> {
+    const { data, error } = await this.client.from('recipes').select('id, title, text, link, creator_id')
+    if (error) throw orConnectionError(error)
+    return data.map((r) => ({ id: r.id, title: r.title, text: r.text, link: r.link, creatorId: r.creator_id }))
+  }
+
+  async createRecipe(recipe: NewRecipe): Promise<void> {
+    const { error } = await this.client
+      .from('recipes')
+      .insert({ title: recipe.title, text: recipe.text, link: recipe.link, creator_id: recipe.creatorId })
+    if (error) throw orConnectionError(error)
+  }
+
+  async updateRecipe(id: string, changes: RecipeChanges): Promise<void> {
+    const { error } = await this.client
+      .from('recipes')
+      .update({ title: changes.title, text: changes.text, link: changes.link })
+      .eq('id', id)
+    if (error) throw orConnectionError(error)
+  }
+
+  async deleteRecipe(id: string): Promise<void> {
+    const { error } = await this.client.from('recipes').delete().eq('id', id)
     if (error) throw orConnectionError(error)
   }
 

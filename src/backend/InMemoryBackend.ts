@@ -1,4 +1,4 @@
-import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewSettlement, type Occupancy, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
+import { ConnectionError, InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewRecipe, type NewSettlement, type Occupancy, type Recipe, type RecipeChanges, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
 
 /** An account without a name has no Flatmate row. */
 type Account = { id: string; name?: string; email: string; password: string }
@@ -10,6 +10,8 @@ export class InMemoryBackend implements Backend {
   private expenses: Expense[] = []
   private settlements: Settlement[] = []
   private settlementCount = 0
+  private recipes: Recipe[] = []
+  private recipeCount = 0
   private listeners = new Set<(topic: Topic) => void>()
   private offline = false
 
@@ -108,6 +110,29 @@ export class InMemoryBackend implements Backend {
     this.failIfOffline()
     this.settlements = this.settlements.filter((s) => s.id !== id)
     this.emit('settlements')
+  }
+
+  async listRecipes(): Promise<Recipe[]> {
+    this.failIfOffline()
+    return [...this.recipes]
+  }
+
+  async createRecipe(recipe: NewRecipe): Promise<void> {
+    this.failIfOffline()
+    this.recipes = [...this.recipes, { ...recipe, id: `recipe-${++this.recipeCount}` }]
+    this.emit('recipes')
+  }
+
+  async updateRecipe(id: string, changes: RecipeChanges): Promise<void> {
+    this.failIfOffline()
+    this.recipes = this.recipes.map((r) => (r.id === id ? { ...r, ...changes } : r))
+    this.emit('recipes')
+  }
+
+  async deleteRecipe(id: string): Promise<void> {
+    this.failIfOffline()
+    this.recipes = this.recipes.filter((r) => r.id !== id)
+    this.emit('recipes')
   }
 
   subscribe(onChange: (topic: Topic) => void): Unsubscribe {

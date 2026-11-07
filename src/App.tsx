@@ -4,6 +4,7 @@ import { watchConnection } from './backend/watchConnection'
 import { useLive } from './useLive'
 import { Rooms } from './Rooms'
 import { Expenses } from './Expenses'
+import { Recipes } from './Recipes'
 import type { Clock } from './clock'
 
 type Props = { backend: Backend; clock: Clock }
@@ -109,6 +110,7 @@ function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: 
       <div role="tabpanel" aria-label={tab}>
         {tab === 'Pièces' && <Rooms backend={backend} clock={clock} me={me} flatmates={flatmates} />}
         {tab === 'Dépenses' && <Expenses backend={backend} clock={clock} me={me} flatmates={flatmates} />}
+        {tab === 'Repas' && <Recipes backend={backend} me={me} flatmates={flatmates} />}
       </div>
     </div>
   )

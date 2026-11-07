@@ -42,8 +42,16 @@ export type Settlement = { id: string; createdAt: Date; creatorId: string; trans
 
 export type NewSettlement = Omit<Settlement, 'id'>
 
+/** A dish we like; link is null when it has none. */
+export type Recipe = { id: string; title: string; text: string; link: string | null; creatorId: string }
+
+export type NewRecipe = Omit<Recipe, 'id'>
+
+/** What editing a Recipe can change; the creator stays. */
+export type RecipeChanges = Pick<Recipe, 'title' | 'text' | 'link'>
+
 /** What kind of data changed; listeners refetch that data. */
-export type Topic = 'flatmates' | 'occupancies' | 'expenses' | 'settlements'
+export type Topic = 'flatmates' | 'occupancies' | 'expenses' | 'settlements' | 'recipes'
 
 export type Unsubscribe = () => void
 
@@ -65,6 +73,10 @@ export interface Backend {
   listSettlements(): Promise<Settlement[]>
   createSettlement(settlement: NewSettlement): Promise<void>
   deleteSettlement(id: string): Promise<void>
+  listRecipes(): Promise<Recipe[]>
+  createRecipe(recipe: NewRecipe): Promise<void>
+  updateRecipe(id: string, changes: RecipeChanges): Promise<void>
+  deleteRecipe(id: string): Promise<void>
   /** Calls onChange whenever data changes, on this device or another one. */
   subscribe(onChange: (topic: Topic) => void): Unsubscribe
 }
