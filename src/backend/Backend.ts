@@ -28,6 +28,9 @@ export type Expense = {
 
 export type NewExpense = Omit<Expense, 'id'>
 
+/** What editing an Expense can change; the creator and creation time stay. */
+export type ExpenseChanges = Pick<Expense, 'label' | 'amountCents' | 'date' | 'payerId' | 'participantIds'>
+
 /** What kind of data changed; listeners refetch that data. */
 export type Topic = 'flatmates' | 'occupancies' | 'expenses'
 
@@ -46,6 +49,8 @@ export interface Backend {
   free(room: RoomId): Promise<void>
   listExpenses(): Promise<Expense[]>
   createExpense(expense: NewExpense): Promise<void>
+  updateExpense(id: string, changes: ExpenseChanges): Promise<void>
+  deleteExpense(id: string): Promise<void>
   /** Calls onChange whenever data changes, on this device or another one. */
   subscribe(onChange: (topic: Topic) => void): Unsubscribe
 }
