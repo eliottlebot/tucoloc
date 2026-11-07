@@ -34,14 +34,14 @@ test('an Expense saved without connection says so and is not listed', async () =
   const { backend, user } = renderApp({ loggedInAs: ELIOTT.id })
   await user.click(await screen.findByRole('button', { name: 'Tricount' }))
   await user.click(await screen.findByRole('button', { name: 'Ajouter une depense' }))
-  await user.type(screen.getByLabelText('Libelle'), 'Courses')
-  await user.type(screen.getByLabelText('Montant (€)'), '12,60')
+  await user.type(screen.getByLabelText('Titre'), 'Courses')
+  await user.type(screen.getByLabelText('Prix'), '12,60')
 
   backend.goOffline()
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
   expect(await screen.findByText(NO_CONNECTION)).toBeInTheDocument()
-  expect(screen.getByLabelText('Libelle')).toHaveValue('Courses')
+  expect(screen.getByLabelText('Titre')).toHaveValue('Courses')
   expect(screen.queryByRole('listitem', { name: 'Courses' })).not.toBeInTheDocument()
 })
 

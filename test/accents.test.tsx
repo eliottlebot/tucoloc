@@ -9,8 +9,8 @@ test('an Expense label typed with accents is saved without them', async () => {
   await user.click(await screen.findByRole('button', { name: 'Tricount' }))
   await user.click(await screen.findByRole('button', { name: 'Ajouter une depense' }))
 
-  await user.type(screen.getByLabelText('Libelle'), 'Crème brûlée, œufs')
-  await user.type(screen.getByLabelText('Montant (€)'), '9')
+  await user.type(screen.getByLabelText('Titre'), 'Crème brûlée, œufs')
+  await user.type(screen.getByLabelText('Prix'), '9')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
   expect(await screen.findByRole('listitem', { name: 'Creme brulee, oeufs' })).toBeInTheDocument()

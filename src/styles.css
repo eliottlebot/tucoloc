@@ -366,7 +366,8 @@ p.offline-banner {
   flex: none;
 }
 
-.field-inline input {
+.field-inline input,
+.field-inline select {
   margin-top: 0;
 }
 
@@ -431,7 +432,8 @@ p.offline-banner {
 }
 
 /* Recettes: the list. */
-.recipe-list {
+.recipe-list,
+.card-list {
   list-style: none;
   margin: 17px 0 0;
   padding: 0;
@@ -499,7 +501,8 @@ p.offline-banner {
 }
 
 /* Recettes: add or edit a Recipe. */
-.recipe-form label {
+.recipe-form label,
+.expense-form label {
   font-size: 30px;
 }
 
@@ -527,4 +530,70 @@ p.offline-banner {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Tricount: cards of 24px text, details smaller. */
+.card-list .card,
+.balances,
+.transfers {
+  margin-bottom: 17px;
+  font-size: 24px;
+}
+
+.card .card-detail {
+  margin-top: 6px;
+  font-size: 16px;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.balances {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.balances table {
+  flex: 1;
+  border-collapse: collapse;
+}
+
+.balances th,
+.balances td {
+  padding: 2px 0;
+  font-weight: 400;
+  text-align: left;
+}
+
+.balances .owed {
+  color: var(--free);
+}
+
+.balances .owes {
+  color: var(--action);
+}
+
+/* Tricount: add or edit an Expense. */
+.expense-form select,
+.expense-form input[type='date'] {
+  font-size: 24px;
+  color: var(--card);
+}
+
+.expense-form select {
+  appearance: none;
+  padding-right: 36px;
+  background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23005EC7' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9L12 15L18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+}
+
+.expense-form fieldset label {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  margin: 6px 0;
 }

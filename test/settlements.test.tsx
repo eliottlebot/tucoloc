@@ -70,11 +70,11 @@ test('an Expense entered after a Settlement but dated before it stays open and c
   act(() => clock.advance(60 * 60 * 1000))
 
   await user.click(screen.getByRole('button', { name: 'Ajouter une depense' }))
-  await user.type(screen.getByLabelText('Libelle'), 'Pain oublie')
-  await user.type(screen.getByLabelText('Montant (€)'), '3')
+  await user.type(screen.getByLabelText('Titre'), 'Pain oublie')
+  await user.type(screen.getByLabelText('Prix'), '3')
   await user.clear(screen.getByLabelText('Date'))
   await user.type(screen.getByLabelText('Date'), '2026-11-01')
-  await user.selectOptions(screen.getByLabelText('Paye par'), 'Tom')
+  await user.selectOptions(screen.getByLabelText('Acheteur'), 'Tom')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
   await screen.findByText('Eliott doit 1,00 € a Tom')
