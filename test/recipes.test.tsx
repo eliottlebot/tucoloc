@@ -64,7 +64,7 @@ test('a Flatmate opens a Recipe to read its full text and follow its link', asyn
   expect(recipes().getByRole('button', { name: 'Tarte aux poireaux' })).toBeInTheDocument()
 })
 
-const LEAS_CURRY = { title: 'Curry', text: 'Lait de coco', link: null, photo: null, creatorId: LEA.id }
+const LEAS_CURRY = { title: 'Curry', text: 'Lait de coco', link: null, photo: null, proteins: null, carbs: null, fats: null, creatorId: LEA.id }
 
 test('a Flatmate edits a Recipe another Flatmate added', async () => {
   const { backend, user } = await openRecipes()

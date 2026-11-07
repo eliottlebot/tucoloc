@@ -144,7 +144,7 @@ export class SupabaseBackend implements Backend {
   }
 
   async listRecipes(): Promise<Recipe[]> {
-    const { data, error } = await this.client.from('recipes').select('id, title, text, link, photo_path, creator_id')
+    const { data, error } = await this.client.from('recipes').select('id, title, text, link, photo_path, proteins_g, carbs_g, fats_g, creator_id')
     if (error) throw orConnectionError(error)
     const paths: string[] = data.flatMap((r) => (r.photo_path ? [r.photo_path] : []))
     const urls = new Map<string, string>()
@@ -160,6 +160,9 @@ export class SupabaseBackend implements Backend {
       link: r.link,
       // A link that failed to sign shows no image, but the path stays so an edit doesn't drop the photo.
       photo: r.photo_path ? { path: r.photo_path, url: urls.get(r.photo_path) ?? '' } : null,
+      proteins: r.proteins_g,
+      carbs: r.carbs_g,
+      fats: r.fats_g,
       creatorId: r.creator_id,
     }))
   }
@@ -172,6 +175,9 @@ export class SupabaseBackend implements Backend {
         text: recipe.text,
         link: recipe.link,
         photo_path: recipe.photo?.path ?? null,
+        proteins_g: recipe.proteins,
+        carbs_g: recipe.carbs,
+        fats_g: recipe.fats,
         creator_id: recipe.creatorId,
       })
     if (error) throw orConnectionError(error)
@@ -180,7 +186,15 @@ export class SupabaseBackend implements Backend {
   async updateRecipe(id: string, changes: RecipeChanges): Promise<void> {
     const { error } = await this.client
       .from('recipes')
-      .update({ title: changes.title, text: changes.text, link: changes.link, photo_path: changes.photo?.path ?? null })
+      .update({
+        title: changes.title,
+        text: changes.text,
+        link: changes.link,
+        photo_path: changes.photo?.path ?? null,
+        proteins_g: changes.proteins,
+        carbs_g: changes.carbs,
+        fats_g: changes.fats,
+      })
       .eq('id', id)
     if (error) throw orConnectionError(error)
   }

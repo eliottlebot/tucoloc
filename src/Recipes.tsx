@@ -5,6 +5,21 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { TonightsMeal } from './Meal'
 import { useLive } from './useLive'
 
+/** Nutrition values per portion, in the order and with the letters shown: "P: 43g G: 160g L: 20g". */
+const NUTRIENTS = [
+  { key: 'proteins', letter: 'P', label: 'Proteines (g)' },
+  { key: 'carbs', letter: 'G', label: 'Glucides (g)' },
+  { key: 'fats', letter: 'L', label: 'Lipides (g)' },
+] as const
+
+type Nutrient = (typeof NUTRIENTS)[number]['key']
+
+/** Only the values given; empty when none is. */
+const formatNutrition = (recipe: Recipe) =>
+  NUTRIENTS.filter((n) => recipe[n.key] !== null)
+    .map((n) => `${n.letter}: ${recipe[n.key]}g`)
+    .join(' ')
+
 type Props = { backend: Backend; clock: Clock; me: Flatmate; flatmates: Flatmate[] | undefined }
 
 export function Recipes({ backend, clock, me, flatmates }: Props) {
@@ -72,6 +87,7 @@ export function Recipes({ backend, clock, me, flatmates }: Props) {
             <li key={r.id}>
               {r.photo?.url && <img src={r.photo.url} alt={r.title} width={48} height={48} style={{ objectFit: 'cover' }} />}
               <button onClick={() => openRecipeById(r.id)}>{r.title}</button>
+              {formatNutrition(r) && <span>{formatNutrition(r)}</span>}
             </li>
           ))}
       </ul>
@@ -93,6 +109,7 @@ function RecipeView({ recipe, nameOf, onBack, onEdit, onDelete, onChooseForTonig
     <article>
       <h2>{recipe.title}</h2>
       {recipe.photo?.url && <img src={recipe.photo.url} alt={recipe.title} style={{ maxWidth: '100%' }} />}
+      {formatNutrition(recipe) && <p>{formatNutrition(recipe)}</p>}
       {recipe.text && <p style={{ whiteSpace: 'pre-wrap' }}>{recipe.text}</p>}
       {recipe.link && (
         <p>
@@ -125,6 +142,9 @@ function RecipeForm({ backend, me, editing, onDone }: FormProps) {
   // The photo kept from before, until a new file replaces it or it is removed.
   const [photo, setPhoto] = useState<Photo | null>(editing?.photo ?? null)
   const [newPhoto, setNewPhoto] = useState<File | null>(null)
+  const [grams, setGrams] = useState(
+    () => Object.fromEntries(NUTRIENTS.map((n) => [n.key, editing?.[n.key]?.toString() ?? ''])) as Record<Nutrient, string>,
+  )
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -134,12 +154,19 @@ function RecipeForm({ backend, me, editing, onDone }: FormProps) {
     // Only web addresses: a javascript: link would run code when tapped.
     if (link.trim() && !/^https?:\/\//.test(link.trim()))
       return setError('Le lien doit commencer par http:// ou https://.')
+    // Whole grams, at most 9999: more is a typo, not a portion.
+    if (NUTRIENTS.some((n) => grams[n.key].trim() && !/^\d{1,4}$/.test(grams[n.key].trim())))
+      return setError('Les valeurs nutritionnelles sont des grammes entiers (ex. 43).')
+    const gramsOf = (key: Nutrient) => (grams[key].trim() ? Number(grams[key].trim()) : null)
     setSaving(true)
     const changes = {
       title: title.trim(),
       text: text.trim(),
       link: link.trim() || null,
       photo: newPhoto ? await backend.uploadPhoto(newPhoto) : photo,
+      proteins: gramsOf('proteins'),
+      carbs: gramsOf('carbs'),
+      fats: gramsOf('fats'),
     }
     if (editing) await backend.updateRecipe(editing.id, changes)
     else await backend.createRecipe({ ...changes, creatorId: me.id })
@@ -160,6 +187,16 @@ function RecipeForm({ backend, me, editing, onDone }: FormProps) {
         Lien
         <input inputMode="url" value={link} onChange={(e) => setLink(e.target.value)} />
       </label>
+      {NUTRIENTS.map((n) => (
+        <label key={n.key}>
+          {n.label}
+          <input
+            inputMode="numeric"
+            value={grams[n.key]}
+            onChange={(e) => setGrams((g) => ({ ...g, [n.key]: e.target.value }))}
+          />
+        </label>
+      ))}
       {photo && !newPhoto && (
         <p>
           <img src={photo.url} alt="Photo actuelle" width={96} />

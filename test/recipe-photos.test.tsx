@@ -27,7 +27,7 @@ test('a Flatmate adds a Recipe with a photo, shown in the list and in the Recipe
 async function openLeasCurryWithPhoto() {
   const opened = await openRecipes()
   const curry = await opened.backend.uploadPhoto(photo('curry.jpg'))
-  await opened.backend.createRecipe({ title: 'Curry', text: '', link: null, photo: curry, creatorId: LEA.id })
+  await opened.backend.createRecipe({ title: 'Curry', text: '', link: null, photo: curry, proteins: null, carbs: null, fats: null, creatorId: LEA.id })
   await opened.user.click(await recipes().findByRole('button', { name: 'Curry' }))
   await opened.user.click(screen.getByRole('button', { name: 'Modifier' }))
   return opened

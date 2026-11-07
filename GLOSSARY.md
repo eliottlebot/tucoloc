@@ -20,7 +20,7 @@ _Avoid_: Restroom, bathroom (ambiguous between the two)
 Whether a Room is currently occupied, and by which Flatmate.
 
 **Recipe**:
-A dish any Flatmate can add to the shared list and edit: title, free text, optional photo or link.
+A dish any Flatmate can add to the shared list and edit: title, free text, optional photo, optional nutrition values per portion (protéines, glucides, lipides, in grams).
 
 **Meal**:
 What the whole Flatshare eats together tonight: either a Recipe from the list or a free-text dish. One at a time.
