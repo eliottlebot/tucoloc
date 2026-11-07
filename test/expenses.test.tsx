@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import type { UserEvent } from '@testing-library/user-event'
 import { ELIOTT, LEA, TOM, renderApp, testClock } from './render'
 
@@ -156,4 +156,81 @@ test('an Expense without a date is refused', async () => {
 
   expect(await screen.findByRole('alert')).toHaveTextContent('La date est obligatoire.')
   expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
+})
+
+const LEAS_COURSES = {
+  label: 'Courses',
+  amountCents: 1260,
+  date: '2026-11-04',
+  payerId: LEA.id,
+  participantIds: [ELIOTT.id, LEA.id, TOM.id],
+  creatorId: LEA.id,
+  createdAt: new Date('2026-11-04T18:00:00Z'),
+}
+
+test('a Flatmate edits an Expense another Flatmate added', async () => {
+  const { backend, user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
+  await backend.createExpense(LEAS_COURSES)
+  await user.click(await screen.findByRole('tab', { name: 'Dépenses' }))
+
+  await user.click((await expense('Courses')).getByRole('button', { name: 'Modifier' }))
+  await user.clear(screen.getByLabelText('Libellé'))
+  await user.type(screen.getByLabelText('Libellé'), 'Marché')
+  await user.clear(screen.getByLabelText('Montant (€)'))
+  await user.type(screen.getByLabelText('Montant (€)'), '9,00')
+  await user.clear(screen.getByLabelText('Date'))
+  await user.type(screen.getByLabelText('Date'), '2026-11-03')
+  await user.selectOptions(screen.getByLabelText('Payé par'), 'Tom')
+  await user.click(within(screen.getByRole('group', { name: 'Participants' })).getByRole('checkbox', { name: 'Eliott' }))
+  await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+  const marche = await expense('Marché')
+  expect(marche.getByText('9,00 €')).toBeInTheDocument()
+  expect(marche.getByText('3 nov. 2026')).toBeInTheDocument()
+  expect(marche.getByText('Payé par Tom')).toBeInTheDocument()
+  expect(marche.getByText('Ajoutée par Léa')).toBeInTheDocument()
+  expect(marche.getByText('Léa 4,50 € · Tom 4,50 €')).toBeInTheDocument()
+  expect(screen.queryByRole('listitem', { name: 'Courses' })).not.toBeInTheDocument()
+})
+
+test('editing an Expense starts from its current values and is validated', async () => {
+  const { backend, user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
+  await backend.createExpense(LEAS_COURSES)
+  await user.click(await screen.findByRole('tab', { name: 'Dépenses' }))
+
+  await user.click((await expense('Courses')).getByRole('button', { name: 'Modifier' }))
+  expect(screen.getByLabelText('Montant (€)')).toHaveValue('12,60')
+  expect(screen.getByLabelText('Date')).toHaveValue('2026-11-04')
+  expect(screen.getByLabelText('Payé par')).toHaveDisplayValue('Léa')
+  await user.clear(screen.getByLabelText('Libellé'))
+  await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Le libellé est obligatoire.')
+  expect(await backend.listExpenses()).toMatchObject([{ label: 'Courses' }])
+})
+
+test('deleting an Expense asks first; cancelling keeps it', async () => {
+  const { backend, user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
+  await backend.createExpense(LEAS_COURSES)
+  await user.click(await screen.findByRole('tab', { name: 'Dépenses' }))
+
+  await user.click((await expense('Courses')).getByRole('button', { name: 'Supprimer' }))
+  const dialog = within(screen.getByRole('alertdialog', { name: 'Supprimer la dépense « Courses » ?' }))
+  await user.click(dialog.getByRole('button', { name: 'Annuler' }))
+
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  expect(await expense('Courses')).toBeTruthy()
+})
+
+test('confirming the delete removes the Expense', async () => {
+  const { backend, user } = renderApp({ loggedInAs: ELIOTT.id, clock: clock() })
+  await backend.createExpense(LEAS_COURSES)
+  await user.click(await screen.findByRole('tab', { name: 'Dépenses' }))
+
+  await user.click((await expense('Courses')).getByRole('button', { name: 'Supprimer' }))
+  const dialog = within(screen.getByRole('alertdialog', { name: 'Supprimer la dépense « Courses » ?' }))
+  await user.click(dialog.getByRole('button', { name: 'Supprimer' }))
+
+  await waitFor(() => expect(screen.queryByRole('listitem', { name: 'Courses' })).not.toBeInTheDocument())
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
 })

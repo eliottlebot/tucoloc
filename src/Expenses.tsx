@@ -1,9 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import type { Backend, Day, Expense, Flatmate } from './backend/Backend'
 import type { Clock } from './clock'
+import { ConfirmDelete } from './ConfirmDelete'
 import { useLive } from './useLive'
 
 const formatEuros = (cents: number) => (cents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
+
+/** Cents as form input text: "12,50", without the € sign. */
+const toAmountInput = (cents: number) => (cents / 100).toFixed(2).replace('.', ',')
 
 const formatDay = (day: Day) =>
   new Date(`${day}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -37,30 +41,63 @@ type Props = { backend: Backend; clock: Clock; me: Flatmate; flatmates: Flatmate
 
 export function Expenses({ backend, clock, me, flatmates }: Props) {
   const expenses = useLive(backend, 'expenses', () => backend.listExpenses())
-  const [adding, setAdding] = useState(false)
+  // The form is closed, adding a new Expense, or editing this one.
+  const [form, setForm] = useState<'closed' | 'new' | Expense>('closed')
+  const [deleting, setDeleting] = useState<Expense | null>(null)
   if (!expenses || !flatmates) return null
 
   const nameOf = (id: string) => flatmates.find((f) => f.id === id)!.name
 
   return (
     <>
-      {adding ? (
-        <NewExpenseForm backend={backend} clock={clock} me={me} flatmates={flatmates} onDone={() => setAdding(false)} />
+      {form === 'closed' ? (
+        <button onClick={() => setForm('new')}>Ajouter une dépense</button>
       ) : (
-        <button onClick={() => setAdding(true)}>Ajouter une dépense</button>
+        <ExpenseForm
+          key={form === 'new' ? 'new' : form.id}
+          backend={backend}
+          clock={clock}
+          me={me}
+          flatmates={flatmates}
+          editing={form === 'new' ? undefined : form}
+          onDone={() => setForm('closed')}
+        />
       )}
       <ul>
         {[...expenses].sort(newestFirst).map((e) => (
-          <ExpenseItem key={e.id} expense={e} flatmates={flatmates} nameOf={nameOf} />
+          <ExpenseItem
+            key={e.id}
+            expense={e}
+            flatmates={flatmates}
+            nameOf={nameOf}
+            onEdit={() => setForm(e)}
+            onDelete={() => setDeleting(e)}
+          />
         ))}
       </ul>
+      {deleting && (
+        <ConfirmDelete
+          question={`Supprimer la dépense « ${deleting.label} » ?`}
+          onCancel={() => setDeleting(null)}
+          onConfirm={async () => {
+            setDeleting(null)
+            await backend.deleteExpense(deleting.id)
+          }}
+        />
+      )}
     </>
   )
 }
 
-type ItemProps = { expense: Expense; flatmates: Flatmate[]; nameOf: (id: string) => string }
+type ItemProps = {
+  expense: Expense
+  flatmates: Flatmate[]
+  nameOf: (id: string) => string
+  onEdit: () => void
+  onDelete: () => void
+}
 
-function ExpenseItem({ expense, flatmates, nameOf }: ItemProps) {
+function ExpenseItem({ expense, flatmates, nameOf, onEdit, onDelete }: ItemProps) {
   const split = splitEqually(expense.amountCents, expense.participantIds)
   // Shown in the usual Flatmate order, whatever order the leftover cents followed.
   const shares = flatmates.flatMap((f) => split.filter((s) => s.flatmateId === f.id))
@@ -72,18 +109,28 @@ function ExpenseItem({ expense, flatmates, nameOf }: ItemProps) {
         <span>Ajoutée par {nameOf(expense.creatorId)}</span>
       </p>
       <p>{shares.map((s) => `${nameOf(s.flatmateId)} ${formatEuros(s.cents)}`).join(' · ')}</p>
+      <button onClick={onEdit}>Modifier</button>
+      <button onClick={onDelete}>Supprimer</button>
     </li>
   )
 }
 
-type FormProps = { backend: Backend; clock: Clock; me: Flatmate; flatmates: Flatmate[]; onDone: () => void }
+type FormProps = {
+  backend: Backend
+  clock: Clock
+  me: Flatmate
+  flatmates: Flatmate[]
+  /** The Expense being edited; a new Expense when absent. */
+  editing?: Expense
+  onDone: () => void
+}
 
-function NewExpenseForm({ backend, clock, me, flatmates, onDone }: FormProps) {
-  const [label, setLabel] = useState('')
-  const [amount, setAmount] = useState('')
-  const [date, setDate] = useState(() => today(clock))
-  const [payerId, setPayerId] = useState(me.id)
-  const [participantIds, setParticipantIds] = useState(flatmates.map((f) => f.id))
+function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormProps) {
+  const [label, setLabel] = useState(editing?.label ?? '')
+  const [amount, setAmount] = useState(editing ? toAmountInput(editing.amountCents) : '')
+  const [date, setDate] = useState(() => editing?.date ?? today(clock))
+  const [payerId, setPayerId] = useState(editing?.payerId ?? me.id)
+  const [participantIds, setParticipantIds] = useState(editing?.participantIds ?? flatmates.map((f) => f.id))
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -98,15 +145,9 @@ function NewExpenseForm({ backend, clock, me, flatmates, onDone }: FormProps) {
     if (!date) return setError('La date est obligatoire.')
     if (participantIds.length === 0) return setError('Choisis au moins un participant.')
     setSaving(true)
-    await backend.createExpense({
-      label: label.trim(),
-      amountCents,
-      date,
-      payerId,
-      participantIds,
-      creatorId: me.id,
-      createdAt: clock.now(),
-    })
+    const changes = { label: label.trim(), amountCents, date, payerId, participantIds }
+    if (editing) await backend.updateExpense(editing.id, changes)
+    else await backend.createExpense({ ...changes, creatorId: me.id, createdAt: clock.now() })
     onDone()
   }
 
@@ -146,6 +187,9 @@ function NewExpenseForm({ backend, clock, me, flatmates, onDone }: FormProps) {
       {error && <p role="alert">{error}</p>}
       <button type="submit" disabled={saving}>
         Enregistrer
+      </button>
+      <button type="button" onClick={onDone}>
+        Annuler
       </button>
     </form>
   )

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type Flatmate, type NewExpense, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
+import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
 
 const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses' }
 
@@ -79,6 +79,25 @@ export class SupabaseBackend implements Backend {
       creator_id: expense.creatorId,
       created_at: expense.createdAt.toISOString(),
     })
+    if (error) throw error
+  }
+
+  async updateExpense(id: string, changes: ExpenseChanges): Promise<void> {
+    const { error } = await this.client
+      .from('expenses')
+      .update({
+        label: changes.label,
+        amount_cents: changes.amountCents,
+        date: changes.date,
+        payer_id: changes.payerId,
+        participant_ids: changes.participantIds,
+      })
+      .eq('id', id)
+    if (error) throw error
+  }
+
+  async deleteExpense(id: string): Promise<void> {
+    const { error } = await this.client.from('expenses').delete().eq('id', id)
     if (error) throw error
   }
 
