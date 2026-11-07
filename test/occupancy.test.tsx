@@ -25,7 +25,8 @@ test('a Flatmate occupies a free Room', async () => {
 
   await user.click((await findRoom('WC')).getByRole('button', { name: "J'occupe" }))
 
-  expect(await room('WC').findByText('Occupe par Eliott depuis 14:32')).toBeInTheDocument()
+  expect(await room('WC').findByText('Eliott')).toBeInTheDocument()
+  expect(room('WC').getByText('14h32')).toBeInTheDocument()
   expect(room('WC').queryByText('Libre')).not.toBeInTheDocument()
 })
 
@@ -36,7 +37,7 @@ test('a Flatmate frees their own Occupancy', async () => {
   await user.click(await room('WC').findByRole('button', { name: 'Je libere' }))
 
   expect(await room('WC').findByText('Libre')).toBeInTheDocument()
-  expect(room('WC').queryByText(/Occupe par/)).not.toBeInTheDocument()
+  expect(room('WC').queryByText('Eliott')).not.toBeInTheDocument()
 })
 
 test("a Flatmate frees another Flatmate's Occupancy", async () => {
@@ -52,7 +53,7 @@ test('an occupied Room cannot be occupied', async () => {
   const { backend } = renderApp({ loggedInAs: ELIOTT.id, clock })
   await backend.occupy('wc', LEA.id, clock.now())
 
-  expect(await (await findRoom('WC')).findByText('Occupe par Lea depuis 14:32')).toBeInTheDocument()
+  expect(await (await findRoom('WC')).findByText('Lea')).toBeInTheDocument()
   expect(room('WC').queryByRole('button', { name: "J'occupe" })).not.toBeInTheDocument()
 })
 
@@ -60,13 +61,13 @@ test('the two Rooms are independent', async () => {
   const { user } = renderApp({ loggedInAs: ELIOTT.id, clock })
   await user.click((await findRoom('WC')).getByRole('button', { name: "J'occupe" }))
 
-  expect(await room('WC').findByText(/Occupe par Eliott/)).toBeInTheDocument()
+  expect(await room('WC').findByText('Eliott')).toBeInTheDocument()
   expect(room('Salle de bain').getByText('Libre')).toBeInTheDocument()
 
   await user.click(room('Salle de bain').getByRole('button', { name: "J'occupe" }))
 
-  expect(await room('Salle de bain').findByText(/Occupee par Eliott/)).toBeInTheDocument()
-  expect(room('WC').getByText(/Occupe par Eliott/)).toBeInTheDocument()
+  expect(await room('Salle de bain').findByText('Eliott')).toBeInTheDocument()
+  expect(room('WC').getByText('Eliott')).toBeInTheDocument()
 })
 
 test('an Occupancy made by another Flatmate appears without reload', async () => {
@@ -75,7 +76,8 @@ test('an Occupancy made by another Flatmate appears without reload', async () =>
 
   await backend.occupy('wc', LEA.id, clock.now())
 
-  expect(await room('WC').findByText('Occupe par Lea depuis 14:32')).toBeInTheDocument()
+  expect(await room('WC').findByText('Lea')).toBeInTheDocument()
+  expect(room('WC').getByText('14h32')).toBeInTheDocument()
 })
 
 test('occupying a Room taken while the screen was out of date is refused', async () => {
@@ -86,17 +88,17 @@ test('occupying a Room taken while the screen was out of date is refused', async
   await user.click(wc.getByRole('button', { name: "J'occupe" }))
 
   expect(await wc.findByRole('alert')).toHaveTextContent('WC deja occupe par Lea.')
-  expect(wc.queryByText(/Occupe par Eliott/)).not.toBeInTheDocument()
+  expect(wc.queryByText('Eliott')).not.toBeInTheDocument()
 })
 
 test('the WC frees itself 15 minutes after it was occupied', async () => {
   const { backend } = renderApp({ loggedInAs: ELIOTT.id, clock })
   await backend.occupy('wc', LEA.id, clock.now())
   const wc = await findRoom('WC')
-  await wc.findByText(/Occupe par Lea/)
+  await wc.findByText('Lea')
 
   act(() => clock.advance(14 * MINUTE + 59 * SECOND))
-  expect(wc.getByText(/Occupe par Lea/)).toBeInTheDocument()
+  expect(wc.getByText('Lea')).toBeInTheDocument()
 
   act(() => clock.advance(SECOND))
   expect(wc.getByText('Libre')).toBeInTheDocument()
@@ -106,10 +108,10 @@ test('the Salle de bain frees itself 45 minutes after it was occupied', async ()
   const { backend } = renderApp({ loggedInAs: ELIOTT.id, clock })
   await backend.occupy('salle-de-bain', LEA.id, clock.now())
   const bathroom = await findRoom('Salle de bain')
-  await bathroom.findByText(/Occupee par Lea/)
+  await bathroom.findByText('Lea')
 
   act(() => clock.advance(44 * MINUTE + 59 * SECOND))
-  expect(bathroom.getByText(/Occupee par Lea/)).toBeInTheDocument()
+  expect(bathroom.getByText('Lea')).toBeInTheDocument()
 
   act(() => clock.advance(SECOND))
   expect(bathroom.getByText('Libre')).toBeInTheDocument()
@@ -119,12 +121,13 @@ test('a Room that freed itself can be occupied by another Flatmate', async () =>
   const { backend, user } = renderApp({ loggedInAs: ELIOTT.id, clock })
   await backend.occupy('wc', LEA.id, clock.now())
   const wc = await findRoom('WC')
-  await wc.findByText(/Occupe par Lea/)
+  await wc.findByText('Lea')
   act(() => clock.advance(15 * MINUTE))
 
   await user.click(wc.getByRole('button', { name: "J'occupe" }))
 
-  expect(await wc.findByText('Occupe par Eliott depuis 14:47')).toBeInTheDocument()
+  expect(await wc.findByText('Eliott')).toBeInTheDocument()
+  expect(wc.getByText('14h47')).toBeInTheDocument()
   expect(wc.queryByRole('alert')).not.toBeInTheDocument()
 })
 
@@ -134,11 +137,11 @@ test('both Rooms free themselves one after the other', async () => {
   await backend.occupy('salle-de-bain', ELIOTT.id, clock.now())
   const wc = await findRoom('WC')
   const bathroom = room('Salle de bain')
-  await bathroom.findByText(/Occupee par Eliott/)
+  await bathroom.findByText('Eliott')
 
   act(() => clock.advance(15 * MINUTE))
   expect(wc.getByText('Libre')).toBeInTheDocument()
-  expect(bathroom.getByText(/Occupee par Eliott/)).toBeInTheDocument()
+  expect(bathroom.getByText('Eliott')).toBeInTheDocument()
 
   act(() => clock.advance(30 * MINUTE))
   expect(bathroom.getByText('Libre')).toBeInTheDocument()

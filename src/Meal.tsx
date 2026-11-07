@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import type { Backend, Day, Flatmate, Recipe } from './backend/Backend'
+import type { Backend, Day, Flatmate, Meal, Recipe } from './backend/Backend'
 import type { Clock } from './clock'
 import { plain } from './plain'
 import { useLive } from './useLive'
@@ -36,21 +36,29 @@ type Props = {
   onOpenRecipe: (id: string) => void
 }
 
-/** Tonight's Meal. Derived on read: one set before the latest 6:00 in Paris counts as empty. */
-export function TonightsMeal({ backend, clock, me, recipes, nameOf, onOpenRecipe }: Props) {
+/**
+ * Tonight's Meal, null when there is none; undefined while loading.
+ * Derived on read: one set before the latest 6:00 in Paris counts as empty, and it empties on screen when its 6:00 comes.
+ */
+export function useTonightsMeal(backend: Backend, clock: Clock): Meal | null | undefined {
   const meal = useLive(backend, 'meal', () => backend.getMeal())
   const [now, setNow] = useState(() => clock.now())
-  const [text, setText] = useState('')
 
-  // Empty the Meal on screen when its 6:00 comes.
   const end = meal && endOfMeal(meal.setAt)
   useEffect(() => {
     if (!end || end <= now) return
     return clock.at(end, () => setNow(clock.now()))
   }, [end?.getTime(), clock, now])
 
-  if (meal === undefined) return null
-  const current = end && now < end ? meal : null
+  if (meal === undefined) return undefined
+  return end && now < end ? meal : null
+}
+
+export function TonightsMeal({ backend, clock, me, recipes, nameOf, onOpenRecipe }: Props) {
+  const current = useTonightsMeal(backend, clock)
+  const [text, setText] = useState('')
+
+  if (current === undefined) return null
   const recipe = current?.recipeId ? recipes.find((r) => r.id === current.recipeId) : undefined
 
   async function chooseText(e: FormEvent) {

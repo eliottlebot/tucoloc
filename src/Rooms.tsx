@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import type { Backend, Flatmate, Occupancy, RoomId } from './backend/Backend'
 import type { Clock } from './clock'
+import { BathIcon, ToiletIcon } from './icons'
 import { useLive } from './useLive'
 
 const MINUTE = 60 * 1000
 
 /** freesAfter: a forgotten Occupancy counts as over after this long (spec #1, auto-free). */
-type Room = { id: RoomId; name: string; occupied: string; freesAfter: number }
+type Room = { id: RoomId; name: string; occupied: string; freesAfter: number; Icon: () => ReactElement }
 
 const ROOMS: Room[] = [
-  { id: 'wc', name: 'WC', occupied: 'Occupe', freesAfter: 15 * MINUTE },
-  { id: 'salle-de-bain', name: 'Salle de bain', occupied: 'Occupee', freesAfter: 45 * MINUTE },
+  { id: 'wc', name: 'WC', occupied: 'Occupe', freesAfter: 15 * MINUTE, Icon: ToiletIcon },
+  { id: 'salle-de-bain', name: 'Salle de bain', occupied: 'Occupee', freesAfter: 45 * MINUTE, Icon: BathIcon },
 ]
 
 const endOf = (o: Occupancy) => o.since.getTime() + ROOMS.find((r) => r.id === o.room)!.freesAfter
@@ -18,8 +19,9 @@ const endOf = (o: Occupancy) => o.since.getTime() + ROOMS.find((r) => r.id === o
 /** Occupancies that haven't freed themselves yet. Derived on read: nothing runs in the background. */
 const ongoing = (occupancies: Occupancy[], now: Date) => occupancies.filter((o) => now.getTime() < endOf(o))
 
+/** "14h06", as the mockups write it. */
 const formatTime = (date: Date) =>
-  date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })
+  date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' }).replace(':', 'h')
 
 type Props = { backend: Backend; clock: Clock; me: Flatmate; flatmates: Flatmate[] | undefined }
 
@@ -52,30 +54,28 @@ export function Rooms({ backend, clock, me, flatmates }: Props) {
     await backend.occupy(room.id, me.id, clock.now())
   }
 
+  // Tapping a free Room occupies it, tapping an occupied one frees it, whoever is in it.
   return (
-    <>
-      {ROOMS.map((room) => {
-        const occupancy = current.find((o) => o.room === room.id)
-        return (
-          <section key={room.id} aria-label={room.name}>
-            <h2>{room.name}</h2>
-            {occupancy ? (
-              <>
-                <p>
-                  {room.occupied} par {nameOf(occupancy.flatmateId)} depuis {formatTime(occupancy.since)}
-                </p>
-                <button onClick={() => backend.free(room.id)}>Je libere</button>
-              </>
-            ) : (
-              <>
-                <p>Libre</p>
-                <button onClick={() => occupy(room)}>J'occupe</button>
-              </>
-            )}
-            {refusal?.room === room.id && <p role="alert">{refusal.message}</p>}
-          </section>
-        )
-      })}
-    </>
+    <section aria-label="Appartement">
+      <h2>Appartement</h2>
+      <div className="card rooms">
+        {ROOMS.map((room) => {
+          const occupancy = current.find((o) => o.room === room.id)
+          return (
+            <section key={room.id} aria-label={room.name} className={occupancy ? 'room room-occupied' : 'room'}>
+              <button
+                aria-label={occupancy ? 'Je libere' : "J'occupe"}
+                onClick={() => (occupancy ? backend.free(room.id) : occupy(room))}
+              >
+                <room.Icon />
+              </button>
+              <p className="room-who">{occupancy ? nameOf(occupancy.flatmateId) : 'Libre'}</p>
+              {occupancy && <p className="room-since">{formatTime(occupancy.since)}</p>}
+              {refusal?.room === room.id && <p role="alert">{refusal.message}</p>}
+            </section>
+          )
+        })}
+      </div>
+    </section>
   )
 }

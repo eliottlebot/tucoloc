@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 're
 import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Session } from './backend/Backend'
 import { watchConnection } from './backend/watchConnection'
 import { useLive } from './useLive'
-import { Rooms } from './Rooms'
+import { HomeScreen } from './HomeScreen'
 import { Expenses } from './Expenses'
 import { Recipes } from './Recipes'
 import { LogOutIcon, SaladIcon, ScaleIcon } from './icons'
@@ -90,17 +90,17 @@ function LoginScreen({ backend, initialError, onLogin }: LoginProps) {
   )
 }
 
-/** The home screen (Rooms), and the two screens of the bottom bar: Tricount (Expenses) and Recettes (Recipes). */
-type Screen = 'rooms' | 'expenses' | 'recipes'
+/** The home screen (tonight's Meal, Rooms), and the two screens of the bottom bar: Tricount (Expenses) and Recettes (Recipes). */
+type Screen = 'home' | 'expenses' | 'recipes'
 
 function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: Clock; session: Session; onLogout: () => void }) {
-  const [screen, setScreen] = useState<Screen>('rooms')
+  const [screen, setScreen] = useState<Screen>('home')
   const flatmates = useLive(backend, 'flatmates', () => backend.listFlatmates())
   const me = flatmates?.find((f) => f.id === session.flatmate.id) ?? session.flatmate
   return (
     <>
       <header className="header">
-        <button className="header-home" aria-label={`${me.name.toUpperCase()}, accueil`} onClick={() => setScreen('rooms')}>
+        <button className="header-home" aria-label={`${me.name.toUpperCase()}, accueil`} onClick={() => setScreen('home')}>
           <img src="/logo.png" alt="" width={50} height={50} />
           <span>{me.name.toUpperCase()}</span>
         </button>
@@ -109,7 +109,7 @@ function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: 
         </button>
       </header>
       <main>
-        {screen === 'rooms' && <Rooms backend={backend} clock={clock} me={me} flatmates={flatmates} />}
+        {screen === 'home' && <HomeScreen backend={backend} clock={clock} me={me} flatmates={flatmates} />}
         {screen === 'expenses' && <Expenses backend={backend} clock={clock} me={me} flatmates={flatmates} />}
         {screen === 'recipes' && <Recipes backend={backend} clock={clock} me={me} flatmates={flatmates} />}
       </main>

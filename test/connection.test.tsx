@@ -26,7 +26,7 @@ test('the message goes away once a later call gets through', async () => {
   backend.goOnline()
   await user.click(wc.getByRole('button', { name: "J'occupe" }))
 
-  expect(await wc.findByText(/Occupe par Eliott/)).toBeInTheDocument()
+  expect(await wc.findByText('Eliott')).toBeInTheDocument()
   expect(screen.queryByText(NO_CONNECTION)).not.toBeInTheDocument()
 })
 
@@ -49,11 +49,11 @@ test('freeing a Room without connection says so, and the Room stays occupied', a
   const { backend, user } = renderApp({ loggedInAs: ELIOTT.id })
   const wc = within(await screen.findByRole('region', { name: 'WC' }))
   await user.click(await wc.findByRole('button', { name: "J'occupe" }))
-  await wc.findByText(/Occupe par Eliott/)
+  await wc.findByText('Eliott')
 
   backend.goOffline()
   await user.click(wc.getByRole('button', { name: 'Je libere' }))
 
   expect(await screen.findByText(NO_CONNECTION)).toBeInTheDocument()
-  expect(wc.getByText(/Occupe par Eliott/)).toBeInTheDocument()
+  expect(wc.getByText('Eliott')).toBeInTheDocument()
 })
