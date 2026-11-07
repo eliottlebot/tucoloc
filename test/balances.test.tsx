@@ -77,13 +77,13 @@ test('an amount that does not divide evenly still balances to the cent', async (
 test('Balances follow an edited Expense', async () => {
   const user = await openExpensesWith()
   await user.click(screen.getByRole('button', { name: 'Ajouter une depense' }))
-  await user.type(screen.getByLabelText('Libelle'), 'Courses')
-  await user.type(screen.getByLabelText('Montant (€)'), '12,60')
+  await user.type(screen.getByLabelText('Titre'), 'Courses')
+  await user.type(screen.getByLabelText('Prix'), '12,60')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
   await screen.findByText('Lea doit 4,20 € a Eliott')
 
   await user.click(await screen.findByRole('button', { name: 'Modifier' }))
-  await user.selectOptions(screen.getByLabelText('Paye par'), 'Tom')
+  await user.selectOptions(screen.getByLabelText('Acheteur'), 'Tom')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
   expect(await screen.findByText('Eliott doit 4,20 € a Tom')).toBeInTheDocument()

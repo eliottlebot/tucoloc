@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { Backend, Day, Expense, Flatmate, Settlement, Transfer } from './backend/Backend'
 import type { Clock } from './clock'
 import { ConfirmDialog } from './ConfirmDialog'
+import { CircleCheckIcon, CirclePlusIcon, CircleXIcon, PencilIcon, ScaleIcon } from './icons'
 import { plain } from './plain'
 import { useLive } from './useLive'
 
@@ -96,8 +97,21 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
   const nameOf = (id: string) => flatmates.find((f) => f.id === id)!.name
   const isSettled = isSettledBy(settlements)
 
+  if (form !== 'closed')
+    return (
+      <ExpenseForm
+        backend={backend}
+        clock={clock}
+        me={me}
+        flatmates={flatmates}
+        editing={form === 'new' ? undefined : form}
+        onDone={() => setForm('closed')}
+      />
+    )
+
   return (
     <>
+      <h2>Tricount</h2>
       <Balances
         expenses={expenses.filter((e) => !isSettled(e))}
         flatmates={flatmates}
@@ -116,20 +130,8 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
           })
         }
       />
-      {form === 'closed' ? (
-        <button onClick={() => setForm('new')}>Ajouter une depense</button>
-      ) : (
-        <ExpenseForm
-          key={form === 'new' ? 'new' : form.id}
-          backend={backend}
-          clock={clock}
-          me={me}
-          flatmates={flatmates}
-          editing={form === 'new' ? undefined : form}
-          onDone={() => setForm('closed')}
-        />
-      )}
-      <ul>
+      <h2>Depenses</h2>
+      <ul className="card-list">
         {[...expenses].sort(newestFirst).map((e) => (
           <ExpenseItem
             key={e.id}
@@ -161,6 +163,9 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
           }
         />
       )}
+      <button className="action-button fab" aria-label="Ajouter une depense" onClick={() => setForm('new')}>
+        <CirclePlusIcon />
+      </button>
       {confirming && (
         <ConfirmDialog
           question={confirming.question}
@@ -188,32 +193,35 @@ function Balances({ expenses, flatmates, nameOf, onSettle }: BalancesProps) {
   const perFlatmate = balances(expenses, flatmates)
   const transfers = suggestedTransfers(perFlatmate)
   return (
-    <section>
-      <h2>Soldes</h2>
-      <table>
-        <tbody>
-          {perFlatmate.map((b) => (
-            <tr key={b.flatmateId}>
-              <th scope="row">{nameOf(b.flatmateId)}</th>
-              <td>{formatEuros(b.cents, 'exceptZero')}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <h2>Virements suggeres</h2>
-      {transfers.length === 0 ? (
-        <p>Tout le monde est a jour.</p>
-      ) : (
-        transfers.map((t) => (
-          <p key={t.fromId + t.toId}>
-            {nameOf(t.fromId)} doit {formatEuros(t.cents)} a {nameOf(t.toId)}
-          </p>
-        ))
-      )}
-      <button disabled={transfers.length === 0} onClick={onSettle}>
-        Enregistrer un reglement
-      </button>
-    </section>
+    <>
+      <section aria-label="Soldes" className="card balances">
+        <table>
+          <tbody>
+            {perFlatmate.map((b) => (
+              <tr key={b.flatmateId}>
+                <th scope="row">{nameOf(b.flatmateId)}</th>
+                <td className={b.cents > 0 ? 'owed' : b.cents < 0 ? 'owes' : undefined}>{formatEuros(b.cents, 'exceptZero')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <button className="card-icon" aria-label="Enregistrer un reglement" disabled={transfers.length === 0} onClick={onSettle}>
+          <ScaleIcon />
+        </button>
+      </section>
+      <h2>Virements</h2>
+      <section aria-label="Virements" className="card transfers">
+        {transfers.length === 0 ? (
+          <p>Tout le monde est a jour.</p>
+        ) : (
+          transfers.map((t) => (
+            <p key={t.fromId + t.toId}>
+              {nameOf(t.fromId)} doit {formatEuros(t.cents)} a {nameOf(t.toId)}
+            </p>
+          ))
+        )}
+      </section>
+    </>
   )
 }
 
@@ -221,24 +229,28 @@ type HistoryProps = { settlements: Settlement[]; nameOf: (id: string) => string;
 
 function SettlementHistory({ settlements, nameOf, onDelete }: HistoryProps) {
   return (
-    <section>
+    <>
       <h2>Reglements</h2>
-      <ul aria-label="Reglements">
+      <ul className="card-list" aria-label="Reglements">
         {[...settlements].sort(latestFirst).map((s) => (
-          <li key={s.id}>
-            <p>
-              <span>{formatDay(dayInParis(s.createdAt))}</span> · <span>Enregistre par {nameOf(s.creatorId)}</span>
-            </p>
+          <li key={s.id} className="card">
             {s.transfers.map((t) => (
               <p key={t.fromId + t.toId}>
                 {nameOf(t.fromId)} a paye {formatEuros(t.cents)} a {nameOf(t.toId)}
               </p>
             ))}
-            <button onClick={() => onDelete(s)}>Supprimer</button>
+            <p className="card-detail">
+              <span>{formatDay(dayInParis(s.createdAt))}</span> · <span>Enregistre par {nameOf(s.creatorId)}</span>
+            </p>
+            <div className="card-actions">
+              <button className="action-button" aria-label="Supprimer" onClick={() => onDelete(s)}>
+                <CircleXIcon />
+              </button>
+            </div>
           </li>
         ))}
       </ul>
-    </section>
+    </>
   )
 }
 
@@ -256,19 +268,31 @@ function ExpenseItem({ expense, flatmates, nameOf, settled, onEdit, onDelete }: 
   // Shown in the usual Flatmate order, whatever order the leftover cents followed.
   const shares = flatmates.flatMap((f) => split.filter((s) => s.flatmateId === f.id))
   return (
-    <li aria-label={expense.label}>
-      <strong>{expense.label}</strong> <span>{formatEuros(expense.amountCents)}</span>
-      {settled && <> · <span>regle</span></>}
+    <li aria-label={expense.label} className="card">
       <p>
-        <span>{formatDay(expense.date)}</span> · <span>Paye par {nameOf(expense.payerId)}</span> ·{' '}
-        <span>Ajoutee par {nameOf(expense.creatorId)}</span>
+        <span>{expense.label}</span> - <span>{formatEuros(expense.amountCents)}</span>
       </p>
-      <p>{shares.map((s) => `${nameOf(s.flatmateId)} ${formatEuros(s.cents)}`).join(' · ')}</p>
+      <p>{formatDay(expense.date)}</p>
+      <p>Paye par {nameOf(expense.payerId)}</p>
+      <p className="card-detail">{shares.map((s) => `${nameOf(s.flatmateId)} ${formatEuros(s.cents)}`).join(' · ')}</p>
+      <p className="card-detail">
+        <span>Ajoutee par {nameOf(expense.creatorId)}</span>
+        {settled && (
+          <>
+            {' · '}
+            <span>regle</span>
+          </>
+        )}
+      </p>
       {!settled && (
-        <>
-          <button onClick={onEdit}>Modifier</button>
-          <button onClick={onDelete}>Supprimer</button>
-        </>
+        <div className="card-actions">
+          <button className="action-button" aria-label="Modifier" onClick={onEdit}>
+            <PencilIcon />
+          </button>
+          <button className="action-button" aria-label="Supprimer" onClick={onDelete}>
+            <CircleXIcon />
+          </button>
+        </div>
       )}
     </li>
   )
@@ -299,8 +323,8 @@ function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormPro
   async function submit(e: FormEvent) {
     e.preventDefault()
     const amountCents = parseEuros(amount)
-    if (!label.trim()) return setError('Le libelle est obligatoire.')
-    if (!amountCents) return setError('Indique un montant superieur a 0 (ex. 12,50).')
+    if (!label.trim()) return setError('Le titre est obligatoire.')
+    if (!amountCents) return setError('Indique un prix superieur a 0 (ex. 12,50).')
     if (!date) return setError('La date est obligatoire.')
     if (participantIds.length === 0) return setError('Choisis au moins un participant.')
     setSaving(true)
@@ -311,21 +335,26 @@ function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormPro
   }
 
   return (
-    <form onSubmit={submit}>
-      <label>
-        Libelle
+    <form className="expense-form" onSubmit={submit}>
+      <div className="screen-actions">
+        <button type="button" className="action-button" aria-label="Annuler" onClick={onDone}>
+          <CircleXIcon />
+        </button>
+        <button type="submit" className="action-button" aria-label="Enregistrer" disabled={saving}>
+          <CircleCheckIcon />
+        </button>
+      </div>
+      <h2>{editing ? 'Modifier la depense' : 'Ajouter une depense'}</h2>
+      <label className="field-inline">
+        <span className="label-text">Titre</span>
         <input value={label} onChange={(e) => setLabel(e.target.value)} />
       </label>
-      <label>
-        Montant (€)
-        <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <label className="field-inline">
+        <span className="label-text">Prix</span>
+        <input inputMode="decimal" placeholder="0,00 €" value={amount} onChange={(e) => setAmount(e.target.value)} />
       </label>
-      <label>
-        Date
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-      </label>
-      <label>
-        Paye par
+      <label className="field-inline">
+        <span className="label-text">Acheteur</span>
         <select value={payerId} onChange={(e) => setPayerId(e.target.value)}>
           {flatmates.map((f) => (
             <option key={f.id} value={f.id}>
@@ -333,6 +362,10 @@ function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormPro
             </option>
           ))}
         </select>
+      </label>
+      <label className="field-inline">
+        <span className="label-text">Date</span>
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </label>
       <fieldset>
         <legend>Participants</legend>
@@ -344,12 +377,6 @@ function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormPro
         ))}
       </fieldset>
       {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={saving}>
-        Enregistrer
-      </button>
-      <button type="button" onClick={onDone}>
-        Annuler
-      </button>
     </form>
   )
 }
