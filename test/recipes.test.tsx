@@ -6,7 +6,7 @@ const recipes = () => within(screen.getByRole('list', { name: 'Recettes' }))
 
 async function openRecipes() {
   const opened = renderApp({ loggedInAs: ELIOTT.id })
-  await opened.user.click(await screen.findByRole('tab', { name: 'Repas' }))
+  await opened.user.click(await screen.findByRole('button', { name: 'Recettes' }))
   await screen.findByRole('button', { name: 'Ajouter une recette' })
   return opened
 }
@@ -49,16 +49,16 @@ test('a Flatmate opens a Recipe to read its full text and follow its link', asyn
   const { user } = await openRecipes()
   await addRecipe(user, {
     title: 'Tarte aux poireaux',
-    text: 'Pâte brisée{enter}3 poireaux{enter}Cuire 35 min à 180 °C',
+    text: 'Pate brisee{enter}3 poireaux{enter}Cuire 35 min a 180 °C',
     link: 'https://cuisine.example/tarte',
   })
 
   await user.click(await recipes().findByRole('button', { name: 'Tarte aux poireaux' }))
 
   expect(screen.getByRole('heading', { name: 'Tarte aux poireaux' })).toBeInTheDocument()
-  expect(screen.getByText(/Cuire 35 min à 180 °C/)).toHaveTextContent('Pâte brisée 3 poireaux Cuire 35 min à 180 °C')
+  expect(screen.getByText(/Cuire 35 min a 180 °C/)).toHaveTextContent('Pate brisee 3 poireaux Cuire 35 min a 180 °C')
   expect(screen.getByRole('link', { name: 'https://cuisine.example/tarte' })).toHaveAttribute('href', 'https://cuisine.example/tarte')
-  expect(screen.getByText('Ajoutée par Eliott')).toBeInTheDocument()
+  expect(screen.getByText('Ajoutee par Eliott')).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: 'Retour' }))
   expect(recipes().getByRole('button', { name: 'Tarte aux poireaux' })).toBeInTheDocument()
@@ -74,15 +74,15 @@ test('a Flatmate edits a Recipe another Flatmate added', async () => {
   await user.click(screen.getByRole('button', { name: 'Modifier' }))
   expect(screen.getByLabelText('Recette')).toHaveValue('Lait de coco')
   await user.clear(screen.getByLabelText('Titre'))
-  await user.type(screen.getByLabelText('Titre'), 'Curry de légumes')
+  await user.type(screen.getByLabelText('Titre'), 'Curry de legumes')
   await user.type(screen.getByLabelText('Recette'), ', pois chiches')
   await user.type(screen.getByLabelText('Lien'), 'https://cuisine.example/curry')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
-  expect(await screen.findByRole('heading', { name: 'Curry de légumes' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Curry de legumes' })).toBeInTheDocument()
   expect(screen.getByText('Lait de coco, pois chiches')).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'https://cuisine.example/curry' })).toBeInTheDocument()
-  expect(screen.getByText('Ajoutée par Léa')).toBeInTheDocument()
+  expect(screen.getByText('Ajoutee par Lea')).toBeInTheDocument()
 })
 
 test('deleting a Recipe asks first; cancelling keeps it, confirming removes it', async () => {
@@ -92,7 +92,7 @@ test('deleting a Recipe asks first; cancelling keeps it, confirming removes it',
 
   await user.click(screen.getByRole('button', { name: 'Supprimer' }))
   await user.click(
-    within(screen.getByRole('alertdialog', { name: 'Supprimer la recette « Curry » ?' })).getByRole('button', { name: 'Annuler' }),
+    within(screen.getByRole('alertdialog', { name: 'Supprimer la recette "Curry" ?' })).getByRole('button', { name: 'Annuler' }),
   )
   expect(screen.getByRole('heading', { name: 'Curry' })).toBeInTheDocument()
 

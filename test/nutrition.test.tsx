@@ -6,7 +6,7 @@ const recipes = () => within(screen.getByRole('list', { name: 'Recettes' }))
 
 async function openRecipes() {
   const opened = renderApp({ loggedInAs: ELIOTT.id })
-  await opened.user.click(await screen.findByRole('tab', { name: 'Repas' }))
+  await opened.user.click(await screen.findByRole('button', { name: 'Recettes' }))
   await screen.findByRole('button', { name: 'Ajouter une recette' })
   return opened
 }

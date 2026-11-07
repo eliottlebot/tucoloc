@@ -6,7 +6,7 @@ const photo = (name: string) => new File(['jpeg bytes'], name, { type: 'image/jp
 
 async function openRecipes() {
   const opened = renderApp({ loggedInAs: ELIOTT.id })
-  await opened.user.click(await screen.findByRole('tab', { name: 'Repas' }))
+  await opened.user.click(await screen.findByRole('button', { name: 'Recettes' }))
   await screen.findByRole('button', { name: 'Ajouter une recette' })
   return opened
 }

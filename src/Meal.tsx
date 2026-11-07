@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import type { Backend, Day, Flatmate, Recipe } from './backend/Backend'
 import type { Clock } from './clock'
+import { plain } from './plain'
 import { useLive } from './useLive'
 
 const parisParts = (moment: Date) =>
@@ -55,7 +56,7 @@ export function TonightsMeal({ backend, clock, me, recipes, nameOf, onOpenRecipe
   async function chooseText(e: FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    await backend.setMeal({ recipeId: null, text: text.trim(), setBy: me.id, setAt: clock.now() })
+    await backend.setMeal({ recipeId: null, text: plain(text.trim()), setBy: me.id, setAt: clock.now() })
     setText('')
   }
 
@@ -68,12 +69,12 @@ export function TonightsMeal({ backend, clock, me, recipes, nameOf, onOpenRecipe
             {recipe ? <button onClick={() => onOpenRecipe(recipe.id)}>{recipe.title}</button> : current.text}
           </p>
           <p>
-            Choisi par {nameOf(current.setBy)} à {formatTime(current.setAt)}
+            Choisi par {nameOf(current.setBy)} a {formatTime(current.setAt)}
           </p>
           <button onClick={() => backend.clearMeal()}>Effacer</button>
         </>
       ) : (
-        <p>Rien de prévu.</p>
+        <p>Rien de prevu.</p>
       )}
       <form onSubmit={chooseText}>
         <label>

@@ -6,12 +6,14 @@ type Props = { question: string; confirmLabel: string; onConfirm: () => void; on
 export function ConfirmDialog({ question, confirmLabel, onConfirm, onCancel }: Props) {
   const questionId = useId()
   return (
-    <div role="alertdialog" aria-modal="true" aria-labelledby={questionId}>
-      <p id={questionId}>{question}</p>
-      <button autoFocus onClick={onCancel}>
-        Annuler
-      </button>
-      <button onClick={onConfirm}>{confirmLabel}</button>
+    <div className="dialog-backdrop">
+      <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby={questionId}>
+        <p id={questionId}>{question}</p>
+        <button autoFocus onClick={onCancel}>
+          Annuler
+        </button>
+        <button onClick={onConfirm}>{confirmLabel}</button>
+      </div>
     </div>
   )
 }

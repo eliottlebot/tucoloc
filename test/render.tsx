@@ -5,7 +5,7 @@ import { InMemoryBackend } from '../src/backend/InMemoryBackend'
 import type { Clock } from '../src/clock'
 
 export const ELIOTT = { id: 'eliott', name: 'Eliott', email: 'eliott@coloc.fr', password: 'secret-e' }
-export const LEA = { id: 'lea', name: 'Léa', email: 'lea@coloc.fr', password: 'secret-l' }
+export const LEA = { id: 'lea', name: 'Lea', email: 'lea@coloc.fr', password: 'secret-l' }
 export const TOM = { id: 'tom', name: 'Tom', email: 'tom@coloc.fr', password: 'secret-t' }
 /** An account with no Flatmate row, as when a Supabase user is created but never named. */
 export const NO_FLATMATE = { id: 'ghost', email: 'ghost@coloc.fr', password: 'secret-g' }

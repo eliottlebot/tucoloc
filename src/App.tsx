@@ -5,11 +5,12 @@ import { useLive } from './useLive'
 import { Rooms } from './Rooms'
 import { Expenses } from './Expenses'
 import { Recipes } from './Recipes'
+import { LogOutIcon, SaladIcon, ScaleIcon } from './icons'
 import type { Clock } from './clock'
 
 type Props = { backend: Backend; clock: Clock }
 
-const MISSING_FLATMATE_MESSAGE = "Ce compte n'est pas encore configuré dans Tucoloc."
+const MISSING_FLATMATE_MESSAGE = "Ce compte n'est pas encore configure dans Tucoloc."
 
 export function App({ backend: server, clock }: Props) {
   const [connected, setConnected] = useState(true)
@@ -47,7 +48,7 @@ export function App({ backend: server, clock }: Props) {
   }
   return (
     <>
-      {!connected && <p role="alert">Pas de connexion. Réessaie quand le réseau revient.</p>}
+      {!connected && <p role="alert" className="offline-banner">Pas de connexion. Reessaie quand le reseau revient.</p>}
       {screen}
     </>
   )
@@ -73,6 +74,7 @@ function LoginScreen({ backend, initialError, onLogin }: LoginProps) {
 
   return (
     <form onSubmit={submit}>
+      <img className="login-logo" src="/logo.png" alt="" width={100} height={100} />
       <h1>Tucoloc</h1>
       <label>
         Email
@@ -88,30 +90,37 @@ function LoginScreen({ backend, initialError, onLogin }: LoginProps) {
   )
 }
 
-const TABS = ['Pièces', 'Dépenses', 'Repas'] as const
+/** The home screen (Rooms), and the two screens of the bottom bar: Tricount (Expenses) and Recettes (Recipes). */
+type Screen = 'rooms' | 'expenses' | 'recipes'
 
 function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: Clock; session: Session; onLogout: () => void }) {
-  const [tab, setTab] = useState<(typeof TABS)[number]>('Pièces')
+  const [screen, setScreen] = useState<Screen>('rooms')
   const flatmates = useLive(backend, 'flatmates', () => backend.listFlatmates())
   const me = flatmates?.find((f) => f.id === session.flatmate.id) ?? session.flatmate
   return (
-    <div>
-      <header>
-        <span>{me.name}</span>
-        <button onClick={onLogout}>Se déconnecter</button>
+    <>
+      <header className="header">
+        <button className="header-home" aria-label={`${me.name.toUpperCase()}, accueil`} onClick={() => setScreen('rooms')}>
+          <img src="/logo.png" alt="" width={50} height={50} />
+          <span>{me.name.toUpperCase()}</span>
+        </button>
+        <button className="header-logout" aria-label="Se deconnecter" onClick={onLogout}>
+          <LogOutIcon />
+        </button>
       </header>
-      <div role="tablist">
-        {TABS.map((t) => (
-          <button key={t} role="tab" aria-selected={t === tab} onClick={() => setTab(t)}>
-            {t}
-          </button>
-        ))}
-      </div>
-      <div role="tabpanel" aria-label={tab}>
-        {tab === 'Pièces' && <Rooms backend={backend} clock={clock} me={me} flatmates={flatmates} />}
-        {tab === 'Dépenses' && <Expenses backend={backend} clock={clock} me={me} flatmates={flatmates} />}
-        {tab === 'Repas' && <Recipes backend={backend} clock={clock} me={me} flatmates={flatmates} />}
-      </div>
-    </div>
+      <main>
+        {screen === 'rooms' && <Rooms backend={backend} clock={clock} me={me} flatmates={flatmates} />}
+        {screen === 'expenses' && <Expenses backend={backend} clock={clock} me={me} flatmates={flatmates} />}
+        {screen === 'recipes' && <Recipes backend={backend} clock={clock} me={me} flatmates={flatmates} />}
+      </main>
+      <nav className="bottom-bar" aria-label="Navigation">
+        <button aria-label="Tricount" aria-current={screen === 'expenses'} onClick={() => setScreen('expenses')}>
+          <ScaleIcon />
+        </button>
+        <button aria-label="Recettes" aria-current={screen === 'recipes'} onClick={() => setScreen('recipes')}>
+          <SaladIcon />
+        </button>
+      </nav>
+    </>
   )
 }

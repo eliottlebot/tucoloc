@@ -1,0 +1,200 @@
+/* Design tokens, from the Figma mockups. */
+:root {
+  --background: #f0f0f0;
+  --card: #005ec7;
+  --highlight: #ffcf00;
+  --action: #e70000;
+  --free: #2cdb00;
+  --on-card: #ffffff;
+  --radius: 15px;
+  /* BBH Hegarty has no accented letters: the app writes and saves text without accents (see plain.ts). */
+  --font: 'BBH Hegarty', 'Arial Black', system-ui, sans-serif;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--card);
+  font-family: var(--font);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile first; on a wide screen the app stays a phone-width column. */
+#root {
+  max-width: 420px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 16px 16px 120px;
+}
+
+h1,
+h2 {
+  color: var(--action);
+  font-weight: 400;
+  text-align: center;
+}
+
+h2 {
+  font-size: 28px;
+  margin: 32px 0 16px;
+}
+
+button {
+  font: inherit;
+  font-size: 18px;
+  color: var(--on-card);
+  background: var(--action);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+label {
+  display: block;
+  color: var(--action);
+  font-size: 22px;
+  margin: 12px 0;
+}
+
+input,
+select,
+textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  font: inherit;
+  font-size: 18px;
+  color: var(--card);
+  background: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+input[type='checkbox'] {
+  display: inline;
+  width: auto;
+  margin-right: 8px;
+}
+
+fieldset {
+  border: none;
+  padding: 0;
+}
+
+legend {
+  color: var(--action);
+  font-size: 22px;
+}
+
+/* Form errors and refusals. */
+p[role='alert'] {
+  color: var(--action);
+}
+
+/* Header: logo and the Flatmate's name lead home; logout on the right. */
+.header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.header-home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  color: var(--action);
+  font-size: 38px;
+  line-height: 1;
+  padding: 0;
+}
+
+.header-logout {
+  position: absolute;
+  top: 24px;
+  right: 0;
+  background: none;
+  color: var(--action);
+  padding: 0;
+}
+
+/* Bottom bar: two yellow buttons, on every screen. */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  gap: 64px;
+  padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, var(--background) 30%);
+}
+
+.bottom-bar button {
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  background: var(--highlight);
+  color: var(--card);
+  border-radius: var(--radius);
+  padding: 0;
+}
+
+/* Login: the logo above the app name. */
+.login-logo {
+  display: block;
+  margin: 48px auto 0;
+}
+
+p.offline-banner {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--action);
+  color: var(--on-card);
+  text-align: center;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 0.4);
+}
+
+.dialog {
+  width: min(100%, 388px);
+  padding: 20px;
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--on-card);
+  font-size: 20px;
+  text-align: center;
+}
+
+.dialog button + button {
+  margin-left: 12px;
+}
