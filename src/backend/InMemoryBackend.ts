@@ -1,4 +1,4 @@
-import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
+import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewSettlement, type Occupancy, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
 
 /** An account without a name has no Flatmate row. */
 type Account = { id: string; name?: string; email: string; password: string }
@@ -8,6 +8,8 @@ export class InMemoryBackend implements Backend {
   private sessionFlatmateId: string | null
   private occupancies: Occupancy[] = []
   private expenses: Expense[] = []
+  private settlements: Settlement[] = []
+  private settlementCount = 0
   private listeners = new Set<(topic: Topic) => void>()
 
   constructor(options: { accounts: Account[]; loggedInAs?: string }) {
@@ -77,6 +79,20 @@ export class InMemoryBackend implements Backend {
   async deleteExpense(id: string): Promise<void> {
     this.expenses = this.expenses.filter((e) => e.id !== id)
     this.emit('expenses')
+  }
+
+  async listSettlements(): Promise<Settlement[]> {
+    return [...this.settlements]
+  }
+
+  async createSettlement(settlement: NewSettlement): Promise<void> {
+    this.settlements = [...this.settlements, { ...settlement, id: `settlement-${++this.settlementCount}` }]
+    this.emit('settlements')
+  }
+
+  async deleteSettlement(id: string): Promise<void> {
+    this.settlements = this.settlements.filter((s) => s.id !== id)
+    this.emit('settlements')
   }
 
   subscribe(onChange: (topic: Topic) => void): Unsubscribe {

@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type Occupancy, type RoomId, type Session, type Topic, type Unsubscribe } from './Backend'
+import { InvalidCredentialsError, MissingFlatmateError, type Backend, type Expense, type ExpenseChanges, type Flatmate, type NewExpense, type NewSettlement, type Occupancy, type RoomId, type Session, type Settlement, type Topic, type Unsubscribe } from './Backend'
 
-const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses' }
+const TOPIC_BY_TABLE: Record<string, Topic> = { flatmates: 'flatmates', rooms: 'occupancies', expenses: 'expenses', settlements: 'settlements' }
 
 export class SupabaseBackend implements Backend {
   private client: SupabaseClient
@@ -98,6 +98,35 @@ export class SupabaseBackend implements Backend {
 
   async deleteExpense(id: string): Promise<void> {
     const { error } = await this.client.from('expenses').delete().eq('id', id)
+    if (error) throw error
+  }
+
+  async listSettlements(): Promise<Settlement[]> {
+    const { data, error } = await this.client.from('settlements').select('id, created_at, creator_id, transfers')
+    if (error) throw error
+    return data.map((s) => ({
+      id: s.id,
+      createdAt: new Date(s.created_at),
+      creatorId: s.creator_id,
+      transfers: (s.transfers as { from_id: string; to_id: string; amount_cents: number }[]).map((t) => ({
+        fromId: t.from_id,
+        toId: t.to_id,
+        cents: t.amount_cents,
+      })),
+    }))
+  }
+
+  async createSettlement(settlement: NewSettlement): Promise<void> {
+    const { error } = await this.client.from('settlements').insert({
+      created_at: settlement.createdAt.toISOString(),
+      creator_id: settlement.creatorId,
+      transfers: settlement.transfers.map((t) => ({ from_id: t.fromId, to_id: t.toId, amount_cents: t.cents })),
+    })
+    if (error) throw error
+  }
+
+  async deleteSettlement(id: string): Promise<void> {
+    const { error } = await this.client.from('settlements').delete().eq('id', id)
     if (error) throw error
   }
 

@@ -27,12 +27,12 @@ What the whole Flatshare eats together tonight: either a Recipe from the list or
 _Avoid_: Dinner, menu, repas
 
 **Expense**:
-Money one Flatmate (the payer) spent on a date for some of the Flatmates (the participants), described by a label and split equally between them. Records who created it, which may differ from the payer. Settled once a Settlement follows it, and then read-only.
+Money one Flatmate (the payer) spent on a date for some of the Flatmates (the participants), described by a label and split equally between them. Records who created it, which may differ from the payer. Settled once a Settlement is recorded after it was created (whatever its date), and then read-only.
 _Avoid_: Purchase, dépense, transaction
 
 **Balance**:
 How much a Flatmate is owed (positive) or owes (negative) across all Expenses since the last Settlement.
 
 **Settlement**:
-The moment the Flatmates pay each other the suggested transfers and reset every Balance to zero, all at once. Settles every Expense before it.
+The moment the Flatmates pay each other the suggested transfers and reset every Balance to zero, all at once. Settles every Expense created before it.
 _Avoid_: Reimbursement, remboursement, payback (partial or per-expense paybacks don't exist)
