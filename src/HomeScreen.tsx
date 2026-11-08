@@ -46,13 +46,7 @@ function TonightsMealCard({ backend, clock, flatmates }: MealProps) {
             </div>
           </>
         ) : (
-          <div className="meal-skeleton" role="img" aria-label="Rien de prevu">
-            <div className="meal-photo" />
-            <div className="meal-details">
-              <span />
-              <span />
-            </div>
-          </div>
+          <p className="meal-empty">Aucun plat choisi</p>
         )}
       </div>
     </section>

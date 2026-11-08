@@ -39,3 +39,7 @@ export function testClock(start: Date) {
     },
   }
 }
+
+/** Matches a paragraph by its whole text, even when part of it (an amount) sits in its own element. Whitespace reads as one space. */
+export const sentence = (expected: string) => (_: string, element: Element | null) =>
+  element?.tagName === 'P' && element.textContent!.replace(/\s+/g, ' ') === expected

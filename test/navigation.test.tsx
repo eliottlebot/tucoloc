@@ -22,3 +22,14 @@ test('the bottom bar leads to Tricount and Recettes, the header back home', asyn
   await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'ELIOTT, accueil' }))
   expect(await screen.findByRole('region', { name: 'WC' })).toBeInTheDocument()
 })
+
+test('the Accueil button of the bottom bar leads back home', async () => {
+  const { user } = renderApp({ loggedInAs: ELIOTT.id })
+  const bar = within(await screen.findByRole('navigation'))
+
+  await user.click(bar.getByRole('button', { name: 'Courses' }))
+  await screen.findByRole('list', { name: 'Liste de courses' })
+
+  await user.click(bar.getByRole('button', { name: 'Accueil' }))
+  expect(await screen.findByRole('region', { name: 'WC' })).toBeInTheDocument()
+})

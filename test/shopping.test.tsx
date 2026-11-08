@@ -51,9 +51,10 @@ async function addAll(user: UserEvent, clock: ReturnType<typeof testClock>, ...n
   }
 }
 
+/** Tapping an Item's name marks it bought. */
 const buy = async (user: UserEvent, name: string) => {
-  await user.click(item(name).getByRole('button', { name: 'Achete' }))
-  await waitFor(() => expect(item(name).queryByRole('button', { name: 'Achete' })).not.toBeInTheDocument())
+  await user.click(item(name).getByRole('button', { name: `Marquer ${name} achete` }))
+  await item(name).findByRole('button', { name: `Remettre ${name} a acheter` })
 }
 
 test('a bought Item goes after the Items to buy, in the order bought', async () => {
@@ -74,7 +75,7 @@ test('tapping a bought Item puts it back to buy, in its place', async () => {
 
   await user.click(item('Salade').getByRole('button', { name: 'Remettre Salade a acheter' }))
 
-  expect(await item('Salade').findByRole('button', { name: 'Achete' })).toBeInTheDocument()
+  expect(await item('Salade').findByRole('button', { name: 'Marquer Salade achete' })).toBeInTheDocument()
   expect(items()).toEqual(['Salade', 'Viande', 'Sopalin'])
 })
 

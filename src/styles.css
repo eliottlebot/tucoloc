@@ -7,8 +7,11 @@
   --free: #2cdb00;
   --on-card: #ffffff;
   --radius: 15px;
-  /* BBH Hegarty has no accented letters: the app writes and saves text without accents (see plain.ts). */
-  --font: 'BBH Hegarty', 'Arial Black', system-ui, sans-serif;
+  /* Titles and Tricount amounts. BBH Hegarty has no accented letters: the app writes and saves text without accents (see plain.ts). */
+  --font-display: 'BBH Hegarty', 'Arial Black', system-ui, sans-serif;
+  /* Everything else: fields, labels, buttons, card text. */
+  --font: 'Outfit', system-ui, sans-serif;
+  --font-weight: 700;
 
   color-scheme: light;
 }
@@ -24,6 +27,7 @@ body {
   background: var(--background);
   color: var(--card);
   font-family: var(--font);
+  font-weight: var(--font-weight);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -33,6 +37,23 @@ body {
   min-height: 100dvh;
   margin: 0 auto;
   padding: 16px 16px 120px;
+}
+
+/* Big and medium titles keep the design font; so do the Tricount amounts. */
+h1,
+h2,
+.header-home,
+.meal-title,
+.recipe-title,
+.selection-dish,
+.selection-label-empty,
+.recipe-form .label-text,
+.balances td,
+.expense > p:not(.card-detail),
+.price {
+  font-family: var(--font-display);
+  /* Its only weight: never a faked bold. */
+  font-weight: 400;
 }
 
 h1,
@@ -168,16 +189,33 @@ p[role='alert'] {
   margin: 48px auto 0;
 }
 
-p.offline-banner {
-  position: sticky;
-  top: 0;
+/* Without connection: a Tuco and the message in the middle of the screen, over a veil.
+   Taps go through to the screen below, so a Flatmate can retry: the message only leaves once a call gets through. */
+.offline-banner {
+  position: fixed;
+  inset: 0;
   z-index: 2;
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: var(--action);
-  color: var(--on-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(240 240 240 / 0.85);
+  color: var(--action);
+  font-size: 22px;
   text-align: center;
+  pointer-events: none;
+}
+
+/* The Tuco pictures have a white ground: shown as a white tile. */
+.offline-banner img {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.offline-banner p {
+  margin: 0;
+  max-width: 320px;
 }
 
 .dialog-backdrop {
@@ -217,15 +255,19 @@ p.offline-banner {
 }
 
 /* Home: tonight's Meal. */
-.meal-card,
-.meal-skeleton {
+.meal-card {
   display: flex;
+  align-items: stretch;
   gap: 13px;
   min-height: 136px;
 }
 
-.meal-skeleton {
+.card .meal-empty {
+  align-self: center;
   flex: 1;
+  text-align: center;
+  font-size: 20px;
+  color: var(--background);
 }
 
 .meal-photo {
@@ -259,18 +301,6 @@ p.offline-banner {
   margin-top: auto;
   color: var(--background);
   font-size: 16px;
-}
-
-.meal-skeleton .meal-details span {
-  display: block;
-  height: 22px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  background: rgb(255 255 255 / 0.15);
-}
-
-.meal-skeleton .meal-details span:last-child {
-  width: 60%;
 }
 
 /* Home: the two Rooms side by side; green icon when free, red when occupied. */
@@ -571,7 +601,7 @@ p.offline-banner {
 .balances th,
 .balances td {
   padding: 2px 0;
-  font-weight: 400;
+  font-weight: inherit;
   text-align: left;
 }
 

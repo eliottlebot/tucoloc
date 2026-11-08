@@ -38,8 +38,8 @@ test('a free-text Meal shows on the home screen without a photo', async () => {
   expect(mealCard().queryByRole('img', { name: 'Pizza commandee' })).not.toBeInTheDocument()
 })
 
-test('without a Meal the home screen shows an empty card', async () => {
+test('without a Meal the home screen says no dish is chosen', async () => {
   openHome()
 
-  expect((await findMealCard()).getByRole('img', { name: 'Rien de prevu' })).toBeInTheDocument()
+  expect((await findMealCard()).getByText('Aucun plat choisi')).toBeInTheDocument()
 })
