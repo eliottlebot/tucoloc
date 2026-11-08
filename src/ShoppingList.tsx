@@ -53,22 +53,14 @@ export function ShoppingList({ backend, clock }: Props) {
             <button className="card-icon" aria-label="Supprimer" onClick={() => backend.deleteShoppingItem(item.id)}>
               <CircleXIcon />
             </button>
-            {item.boughtAt ? (
-              <button
-                className="shopping-name"
-                aria-label={`Remettre ${item.name} a acheter`}
-                onClick={() => backend.setShoppingItemBought(item.id, null)}
-              >
-                {item.name}
-              </button>
-            ) : (
-              <>
-                <span className="shopping-name">{item.name}</span>
-                <button className="card-icon" aria-label="Achete" onClick={() => backend.setShoppingItemBought(item.id, clock.now())}>
-                  <CircleCheckIcon />
-                </button>
-              </>
-            )}
+            {/* Tapping the name marks the Item bought, or puts a bought one back to buy. */}
+            <button
+              className="shopping-name"
+              aria-label={item.boughtAt ? `Remettre ${item.name} a acheter` : `Marquer ${item.name} achete`}
+              onClick={() => backend.setShoppingItemBought(item.id, item.boughtAt ? null : clock.now())}
+            >
+              {item.name}
+            </button>
           </li>,
         ])}
       </ul>

@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from '@testing-library/react'
 import type { NewExpense } from '../src/backend/Backend'
-import { ELIOTT, LEA, TOM, renderApp, testClock } from './render'
+import { ELIOTT, LEA, TOM, renderApp, testClock, sentence } from './render'
 
 // 14:32 on 5 November 2026 in Paris
 const clock = () => testClock(new Date('2026-11-05T13:32:00Z'))
@@ -77,7 +77,7 @@ test('an Expense entered after a Settlement but dated before it stays open and c
   await user.selectOptions(screen.getByLabelText('Acheteur'), 'Tom')
   await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
-  await screen.findByText('Eliott doit 1,00 € a Tom')
+  await screen.findByText(sentence('Eliott doit 1,00 € a Tom'))
   expect(balances()).toEqual(['Eliott -1,00 €', 'Lea -1,00 €', 'Tom +2,00 €'])
   expect(expense('Pain oublie').queryByText('regle')).not.toBeInTheDocument()
   expect(expense('Pain oublie').getByRole('button', { name: 'Modifier' })).toBeInTheDocument()
@@ -100,8 +100,8 @@ test('the history lists each Settlement with its date, who recorded it and its t
   const [settlement] = history().getAllByRole('listitem')
   expect(within(settlement).getByText('5 nov. 2026')).toBeInTheDocument()
   expect(within(settlement).getByText('Enregistre par Eliott')).toBeInTheDocument()
-  expect(within(settlement).getByText('Lea a paye 4,20 € a Eliott')).toBeInTheDocument()
-  expect(within(settlement).getByText('Tom a paye 4,20 € a Eliott')).toBeInTheDocument()
+  expect(within(settlement).getByText(sentence('Lea a paye 4,20 € a Eliott'))).toBeInTheDocument()
+  expect(within(settlement).getByText(sentence('Tom a paye 4,20 € a Eliott'))).toBeInTheDocument()
 })
 
 /** Tom paid 3,00 for all three, at 14:00, between the two Settlements below. */
@@ -143,7 +143,7 @@ test('deleting the latest Settlement asks first, then reopens the Expenses it se
 
   await user.click((await deleteSettlementRecordedBy(user, 'Tom')).getByRole('button', { name: 'Supprimer' }))
 
-  await screen.findByText('Eliott doit 1,00 € a Tom')
+  await screen.findByText(sentence('Eliott doit 1,00 € a Tom'))
   expect(balances()).toEqual(['Eliott -1,00 €', 'Lea -1,00 €', 'Tom +2,00 €'])
   expect(expense('Pain').queryByText('regle')).not.toBeInTheDocument()
   expect(expense('Courses').getByText('regle')).toBeInTheDocument()
@@ -172,8 +172,8 @@ test('a Settlement counts the Expenses as they are when it is confirmed', async 
   await screen.findByText('Tout le monde est a jour.')
   const [settlement] = history().getAllByRole('listitem')
   // Courses: Eliott +8,40, Lea -4,20, Tom -4,20; Pain: Eliott -1,00, Lea -1,00, Tom +2,00.
-  expect(within(settlement).getByText('Lea a paye 5,20 € a Eliott')).toBeInTheDocument()
-  expect(within(settlement).getByText('Tom a paye 2,20 € a Eliott')).toBeInTheDocument()
+  expect(within(settlement).getByText(sentence('Lea a paye 5,20 € a Eliott'))).toBeInTheDocument()
+  expect(within(settlement).getByText(sentence('Tom a paye 2,20 € a Eliott'))).toBeInTheDocument()
 })
 
 test('confirming records nothing when another Flatmate settled in the meantime', async () => {

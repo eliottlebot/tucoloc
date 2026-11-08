@@ -216,7 +216,7 @@ function Balances({ expenses, flatmates, nameOf, onSettle }: BalancesProps) {
         ) : (
           transfers.map((t) => (
             <p key={t.fromId + t.toId}>
-              {nameOf(t.fromId)} doit {formatEuros(t.cents)} a {nameOf(t.toId)}
+              {nameOf(t.fromId)} doit <span className="price">{formatEuros(t.cents)}</span> a {nameOf(t.toId)}
             </p>
           ))
         )}
@@ -236,7 +236,7 @@ function SettlementHistory({ settlements, nameOf, onDelete }: HistoryProps) {
           <li key={s.id} className="card">
             {s.transfers.map((t) => (
               <p key={t.fromId + t.toId}>
-                {nameOf(t.fromId)} a paye {formatEuros(t.cents)} a {nameOf(t.toId)}
+                {nameOf(t.fromId)} a paye <span className="price">{formatEuros(t.cents)}</span> a {nameOf(t.toId)}
               </p>
             ))}
             <p className="card-detail">
@@ -268,7 +268,7 @@ function ExpenseItem({ expense, flatmates, nameOf, settled, onEdit, onDelete }: 
   // Shown in the usual Flatmate order, whatever order the leftover cents followed.
   const shares = flatmates.flatMap((f) => split.filter((s) => s.flatmateId === f.id))
   return (
-    <li aria-label={expense.label} className="card">
+    <li aria-label={expense.label} className="card expense">
       <p>
         <span>{expense.label}</span> - <span>{formatEuros(expense.amountCents)}</span>
       </p>

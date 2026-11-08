@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react'
 import { ELIOTT, renderApp } from './render'
 
-const NO_CONNECTION = 'Pas de connexion. Reessaie quand le reseau revient.'
+const NO_CONNECTION = "broke ass don't got no signal"
 
 test('occupying a Room without connection says so, and the Room stays free', async () => {
   const { backend, user } = renderApp({ loggedInAs: ELIOTT.id })
@@ -13,6 +13,23 @@ test('occupying a Room without connection says so, and the Room stays free', asy
 
   expect(await screen.findByRole('alert')).toHaveTextContent(NO_CONNECTION)
   expect(wc.getByText('Libre')).toBeInTheDocument()
+})
+
+test('without connection a sad or a pissed Tuco shows, and goes away with the message', async () => {
+  const { backend, user } = renderApp({ loggedInAs: ELIOTT.id })
+  const wc = within(await screen.findByRole('region', { name: 'WC' }))
+  await wc.findByText('Libre')
+  const tuco = () => screen.queryByRole('img', { name: /^Tuco (triste|enerve)$/ })
+  expect(tuco()).not.toBeInTheDocument()
+
+  backend.goOffline()
+  await user.click(wc.getByRole('button', { name: "J'occupe" }))
+  expect(within(await screen.findByRole('alert')).getByRole('img', { name: /^Tuco (triste|enerve)$/ })).toBeInTheDocument()
+
+  backend.goOnline()
+  await user.click(wc.getByRole('button', { name: "J'occupe" }))
+  await wc.findByText('Eliott')
+  expect(tuco()).not.toBeInTheDocument()
 })
 
 test('the message goes away once a later call gets through', async () => {

@@ -5,9 +5,17 @@ import { useLive } from './useLive'
 import { HomeScreen } from './HomeScreen'
 import { Expenses } from './Expenses'
 import { Recipes } from './Recipes'
-import { LogOutIcon, SaladIcon, ScaleIcon, ScrollTextIcon } from './icons'
+import { HouseIcon, LogOutIcon, SaladIcon, ScaleIcon, ScrollTextIcon } from './icons'
 import { ShoppingList } from './ShoppingList'
 import type { Clock } from './clock'
+// Inlined in the bundle: without connection, a picture fetched from the server would not load either.
+import sadTuco from './assets/sad_tuco.png?inline'
+import pissedTuco from './assets/pissed_tuco.png?inline'
+
+const OFFLINE_TUCOS = [
+  { src: sadTuco, alt: 'Tuco triste' },
+  { src: pissedTuco, alt: 'Tuco enerve' },
+]
 
 type Props = { backend: Backend; clock: Clock }
 
@@ -49,9 +57,20 @@ export function App({ backend: server, clock }: Props) {
   }
   return (
     <>
-      {!connected && <p role="alert" className="offline-banner">Pas de connexion. Reessaie quand le reseau revient.</p>}
+      {!connected && <OfflineBanner />}
       {screen}
     </>
+  )
+}
+
+/** "Pas de connexion", under a Tuco drawn at random each time the connection is lost. */
+function OfflineBanner() {
+  const [tuco] = useState(() => OFFLINE_TUCOS[Math.floor(Math.random() * OFFLINE_TUCOS.length)])
+  return (
+    <div role="alert" className="offline-banner">
+      <img src={tuco.src} alt={tuco.alt} width={120} height={120} />
+      <p>broke ass don't got no signal</p>
+    </div>
   )
 }
 
@@ -91,7 +110,7 @@ function LoginScreen({ backend, initialError, onLogin }: LoginProps) {
   )
 }
 
-/** The home screen (tonight's Meal, Rooms), and the screens of the bottom bar: Tricount (Expenses), Recettes (Recipes), Courses (Shopping List). */
+/** The home screen (tonight's Meal, Rooms), and the other screens of the bottom bar: Tricount (Expenses), Recettes (Recipes), Courses (Shopping List). */
 type Screen = 'home' | 'expenses' | 'recipes' | 'shopping'
 
 function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: Clock; session: Session; onLogout: () => void }) {
@@ -116,6 +135,9 @@ function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: 
         {screen === 'shopping' && <ShoppingList backend={backend} clock={clock} />}
       </main>
       <nav className="bottom-bar" aria-label="Navigation">
+        <button aria-label="Accueil" aria-current={screen === 'home'} onClick={() => setScreen('home')}>
+          <HouseIcon />
+        </button>
         <button aria-label="Tricount" aria-current={screen === 'expenses'} onClick={() => setScreen('expenses')}>
           <ScaleIcon />
         </button>
