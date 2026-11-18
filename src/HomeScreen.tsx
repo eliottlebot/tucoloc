@@ -5,6 +5,7 @@ import { formatNutrition } from './Recipes'
 import { Rooms } from './Rooms'
 import { card, display, photoThumb } from './ui'
 import { useLive } from './useLive'
+import { Title } from './Title'
 
 type Props = { backend: Backend; clock: Clock; me: Flatmate; flatmates: Flatmate[] | undefined }
 
@@ -31,7 +32,7 @@ function TonightsMealCard({ backend, clock, flatmates }: MealProps) {
 
   return (
     <section aria-label="Recette du jour">
-      <h2>Recette du jour</h2>
+      <Title>Recette du jour</Title>
       <div className={`${card} flex min-h-34 items-stretch gap-3.25`}>
         {meal && title ? (
           <>

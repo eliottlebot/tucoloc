@@ -26,10 +26,12 @@ const EVENING = '2026-11-05T18:00:00Z'
 test('a Flatmate sets tonight’s Meal from a Recipe', async () => {
   const { user } = await openMealsAt(EVENING)
   expect(isEmpty()).toBeInTheDocument()
+  expect(tonight().getByText('Selection du jour :')).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: 'Choisir Curry pour ce soir' }))
 
   expect(await tonight().findByRole('button', { name: 'Curry' })).toBeInTheDocument()
+  expect(tonight().getByText('Selection du jour :')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /pour ce soir/ })).not.toBeInTheDocument()
   expect(tonight().queryByLabelText('Autre plat')).not.toBeInTheDocument()
 })

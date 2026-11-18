@@ -4,6 +4,7 @@ import type { Clock } from './clock'
 import { BathIcon, ToiletIcon } from './icons'
 import { useLive } from './useLive'
 import { card } from './ui'
+import { Title } from './Title'
 
 const MINUTE = 60 * 1000
 
@@ -58,7 +59,7 @@ export function Rooms({ backend, clock, me, flatmates }: Props) {
   // Tapping a free Room occupies it, tapping an occupied one frees it, whoever is in it.
   return (
     <section aria-label="Appartement">
-      <h2>Appartement</h2>
+      <Title>Appartement</Title>
       <div className={`${card} grid min-h-42.5 grid-cols-2 items-center text-center`}>
         {ROOMS.map((room) => {
           const occupancy = current.find((o) => o.room === room.id)

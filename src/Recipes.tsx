@@ -6,7 +6,8 @@ import { CircleCheckIcon, CirclePlusIcon, CircleXIcon, PencilIcon, TrashIcon } f
 import { TonightsMeal, useTonightsMeal } from './Meal'
 import { plain } from './plain'
 import { useLive } from './useLive'
-import { actionButton, card, cardIcon, cardList, display, fab, fieldInline, photoThumb, screenActions } from './ui'
+import { actionButton, card, cardIcon, cardList, display, fieldInline, photoThumb, screenActions } from './ui'
+import { Title } from './Title'
 
 /** Nutrition values per portion, in the order and with the letters shown: "P: 43g G: 160g L: 20g". */
 const NUTRIENTS = [
@@ -78,7 +79,15 @@ export function Recipes({ backend, clock, me, flatmates }: Props) {
 
   return (
     <>
-      <h2>Recettes</h2>
+      <Title
+        right={
+          <button className={actionButton} aria-label="Ajouter une recette" onClick={() => setForm('new')}>
+            <CirclePlusIcon />
+          </button>
+        }
+      >
+        Recettes
+      </Title>
       <TonightsMeal backend={backend} clock={clock} me={me} meal={meal} recipes={recipes} onOpenRecipe={openRecipeById} />
       <ul className={cardList} aria-label="Recettes">
         {[...recipes]
@@ -106,9 +115,6 @@ export function Recipes({ backend, clock, me, flatmates }: Props) {
             </li>
           ))}
       </ul>
-      <button className={`${actionButton} ${fab}`} aria-label="Ajouter une recette" onClick={() => setForm('new')}>
-        <CirclePlusIcon />
-      </button>
     </>
   )
 }
@@ -135,7 +141,7 @@ function RecipeView({ recipe, nameOf, onBack, onEdit, onDelete }: ViewProps) {
           <CircleXIcon />
         </button>
       </div>
-      <h2>{recipe.title}</h2>
+      <Title>{recipe.title}</Title>
       {recipe.photo?.url && <img className="block w-full rounded-card object-cover" src={recipe.photo.url} alt={recipe.title} />}
       {formatNutrition(recipe) && <p className="text-18">{formatNutrition(recipe)}</p>}
       {recipe.text && <p className="text-18 leading-[1.4] whitespace-pre-wrap">{recipe.text}</p>}
@@ -201,7 +207,7 @@ function RecipeForm({ backend, me, editing, onDone }: FormProps) {
           <CircleCheckIcon />
         </button>
       </div>
-      <h2>{editing ? 'Modifier la recette' : 'Ajouter une recette'}</h2>
+      <Title>{editing ? 'Modifier la recette' : 'Ajouter une recette'}</Title>
       <label className={fieldInline}>
         <span className={fieldName}>Titre</span>
         <input className="mt-0" value={title} onChange={(e) => setTitle(e.target.value)} />

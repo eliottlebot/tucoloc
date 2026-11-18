@@ -5,7 +5,8 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { CircleCheckIcon, CirclePlusIcon, CircleXIcon, PencilIcon, ScaleIcon } from './icons'
 import { plain } from './plain'
 import { useLive } from './useLive'
-import { actionButton, card, cardIcon, cardList, display, fab, fieldInline, screenActions } from './ui'
+import { actionButton, card, cardIcon, cardList, display, fieldInline, screenActions } from './ui'
+import { Title } from './Title'
 
 /** "12,50 €"; with signDisplay 'exceptZero', "+12,50 €" and "-12,50 €". */
 const formatEuros = (cents: number, signDisplay: Intl.NumberFormatOptions['signDisplay'] = 'auto') =>
@@ -120,7 +121,15 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
 
   return (
     <>
-      <h2>Tricount</h2>
+      <Title
+        right={
+          <button className={actionButton} aria-label="Ajouter une depense" onClick={() => setForm('new')}>
+            <CirclePlusIcon />
+          </button>
+        }
+      >
+        Tricount
+      </Title>
       <Balances
         expenses={expenses.filter((e) => !isSettled(e))}
         flatmates={flatmates}
@@ -139,7 +148,7 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
           })
         }
       />
-      <h2>Depenses</h2>
+      <Title>Depenses</Title>
       <ul className={cardList}>
         {[...expenses].sort(newestFirst).map((e) => (
           <ExpenseItem
@@ -172,9 +181,6 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
           }
         />
       )}
-      <button className={`${actionButton} ${fab}`} aria-label="Ajouter une depense" onClick={() => setForm('new')}>
-        <CirclePlusIcon />
-      </button>
       {confirming && (
         <ConfirmDialog
           question={confirming.question}
@@ -218,7 +224,7 @@ function Balances({ expenses, flatmates, nameOf, onSettle }: BalancesProps) {
           <ScaleIcon />
         </button>
       </section>
-      <h2>Virements</h2>
+      <Title>Virements</Title>
       <section aria-label="Virements" className={tricountCard}>
         {transfers.length === 0 ? (
           <p className="m-0">Tout le monde est a jour.</p>
@@ -239,7 +245,7 @@ type HistoryProps = { settlements: Settlement[]; nameOf: (id: string) => string;
 function SettlementHistory({ settlements, nameOf, onDelete }: HistoryProps) {
   return (
     <>
-      <h2>Reglements</h2>
+      <Title>Reglements</Title>
       <ul className={cardList} aria-label="Reglements">
         {[...settlements].sort(latestFirst).map((s) => (
           <li key={s.id} className={tricountCard}>
@@ -353,7 +359,7 @@ function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormPro
           <CircleCheckIcon />
         </button>
       </div>
-      <h2>{editing ? 'Modifier la depense' : 'Ajouter une depense'}</h2>
+      <Title>{editing ? 'Modifier la depense' : 'Ajouter une depense'}</Title>
       <label className={fieldInline}>
         <span className="label-text flex-none">Titre</span>
         <input className="mt-0" value={label} onChange={(e) => setLabel(e.target.value)} />
