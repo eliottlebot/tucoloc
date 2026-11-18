@@ -6,6 +6,8 @@ import { CircleCheckIcon, CirclePlusIcon, CircleXIcon, PencilIcon, TrashIcon } f
 import { TonightsMeal, useTonightsMeal } from './Meal'
 import { plain } from './plain'
 import { useLive } from './useLive'
+import { actionButton, card, cardIcon, cardList, display, fieldInline, photoThumb, screenActions } from './ui'
+import { Title } from './Title'
 
 /** Nutrition values per portion, in the order and with the letters shown: "P: 43g G: 160g L: 20g". */
 const NUTRIENTS = [
@@ -77,21 +79,33 @@ export function Recipes({ backend, clock, me, flatmates }: Props) {
 
   return (
     <>
-      <h2>Recettes</h2>
+      <Title
+        right={
+          <button className={actionButton} aria-label="Ajouter une recette" onClick={() => setForm('new')}>
+            <CirclePlusIcon />
+          </button>
+        }
+      >
+        Recettes
+      </Title>
       <TonightsMeal backend={backend} clock={clock} me={me} meal={meal} recipes={recipes} onOpenRecipe={openRecipeById} />
-      <ul className="recipe-list" aria-label="Recettes">
+      <ul className={cardList} aria-label="Recettes">
         {[...recipes]
           .sort((a, b) => a.title.localeCompare(b.title, 'fr'))
           .map((r) => (
-            <li key={r.id} className="card recipe-card">
-              <button className="recipe-open" aria-label={r.title} onClick={() => openRecipeById(r.id)}>
-                {r.photo?.url ? <img className="recipe-photo" src={r.photo.url} alt={r.title} /> : <span className="recipe-photo" />}
-                <span className="recipe-title">{r.title}</span>
-                {formatNutrition(r) && <span className="recipe-nutrition">{formatNutrition(r)}</span>}
+            <li key={r.id} className={`${card} mb-4.25 flex items-center gap-3 px-4.75 py-3.5`}>
+              <button
+                className="grid min-w-0 flex-1 grid-cols-[100px_1fr] grid-rows-[auto_1fr] gap-x-3.25 bg-transparent p-0 text-left text-inherit"
+                aria-label={r.title}
+                onClick={() => openRecipeById(r.id)}
+              >
+                {r.photo?.url ? <img className={`${photoThumb} row-span-2`} src={r.photo.url} alt={r.title} /> : <span className={`${photoThumb} row-span-2`} />}
+                <span className={`${display} text-24 wrap-anywhere text-highlight`}>{r.title}</span>
+                {formatNutrition(r) && <span className="self-end text-16 text-background">{formatNutrition(r)}</span>}
               </button>
               {!meal && (
                 <button
-                  className="card-icon"
+                  className={cardIcon}
                   aria-label={`Choisir ${r.title} pour ce soir`}
                   onClick={() => backend.setMeal({ recipeId: r.id, text: null, setBy: me.id, setAt: clock.now() })}
                 >
@@ -101,9 +115,6 @@ export function Recipes({ backend, clock, me, flatmates }: Props) {
             </li>
           ))}
       </ul>
-      <button className="action-button fab" aria-label="Ajouter une recette" onClick={() => setForm('new')}>
-        <CirclePlusIcon />
-      </button>
     </>
   )
 }
@@ -118,26 +129,29 @@ type ViewProps = {
 
 function RecipeView({ recipe, nameOf, onBack, onEdit, onDelete }: ViewProps) {
   return (
-    <article className="recipe-view">
-      <div className="screen-actions">
-        <button className="action-button" aria-label="Modifier" onClick={onEdit}>
+    <article>
+      <div className={screenActions}>
+        <button className={actionButton} aria-label="Modifier" onClick={onEdit}>
           <PencilIcon />
         </button>
-        <button className="action-button" aria-label="Supprimer" onClick={onDelete}>
+        <button className={actionButton} aria-label="Supprimer" onClick={onDelete}>
           <TrashIcon />
         </button>
-        <button className="action-button" aria-label="Retour" onClick={onBack}>
+        <button className={actionButton} aria-label="Retour" onClick={onBack}>
           <CircleXIcon />
         </button>
       </div>
-      <h2>{recipe.title}</h2>
-      {recipe.photo?.url && <img className="recipe-view-photo" src={recipe.photo.url} alt={recipe.title} />}
-      {formatNutrition(recipe) && <p className="recipe-view-nutrition">{formatNutrition(recipe)}</p>}
-      {recipe.text && <p className="recipe-view-text">{recipe.text}</p>}
-      <p className="recipe-view-creator">Ajoutee par {nameOf(recipe.creatorId)}</p>
+      <Title>{recipe.title}</Title>
+      {recipe.photo?.url && <img className="block w-full rounded-card object-cover" src={recipe.photo.url} alt={recipe.title} />}
+      {formatNutrition(recipe) && <p className="text-18">{formatNutrition(recipe)}</p>}
+      {recipe.text && <p className="text-18 leading-[1.4] whitespace-pre-wrap">{recipe.text}</p>}
+      <p className="text-18">Ajoutee par {nameOf(recipe.creatorId)}</p>
     </article>
   )
 }
+
+/** A field's name in the Recipe form, in the title font. */
+const fieldName = `${display} label-text flex-none`
 
 type FormProps = {
   backend: Backend
@@ -184,46 +198,47 @@ function RecipeForm({ backend, me, editing, onDone }: FormProps) {
   }
 
   return (
-    <form className="recipe-form" onSubmit={submit}>
-      <div className="screen-actions">
-        <button type="button" className="action-button" aria-label="Annuler" onClick={onDone}>
+    <form onSubmit={submit}>
+      <div className={screenActions}>
+        <button type="button" className={actionButton} aria-label="Annuler" onClick={onDone}>
           <CircleXIcon />
         </button>
-        <button type="submit" className="action-button" aria-label="Enregistrer" disabled={saving}>
+        <button type="submit" className={actionButton} aria-label="Enregistrer" disabled={saving}>
           <CircleCheckIcon />
         </button>
       </div>
-      <h2>{editing ? 'Modifier la recette' : 'Ajouter une recette'}</h2>
-      <label className="field-inline">
-        <span className="label-text">Titre</span>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} />
+      <Title>{editing ? 'Modifier la recette' : 'Ajouter une recette'}</Title>
+      <label className={fieldInline}>
+        <span className={fieldName}>Titre</span>
+        <input className="mt-0" value={title} onChange={(e) => setTitle(e.target.value)} />
       </label>
-      <label>
-        <span className="label-text">Recette</span>
-        <textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} />
+      <label className="text-30">
+        <span className={fieldName}>Recette</span>
+        <textarea className="h-34.25" rows={5} value={text} onChange={(e) => setText(e.target.value)} />
       </label>
       {NUTRIENTS.map((n) => (
-        <label key={n.key} className="field-inline">
-          <span className="label-text">{n.label}</span>
+        <label key={n.key} className={fieldInline}>
+          <span className={fieldName}>{n.label}</span>
           <input
+            className="mt-0"
             inputMode="numeric"
             value={grams[n.key]}
             onChange={(e) => setGrams((g) => ({ ...g, [n.key]: e.target.value }))}
           />
         </label>
       ))}
-      <label className="field-inline photo-picker">
-        <span className="label-text">Photo</span>
-        <span className="action-button" aria-hidden="true">
+      <label className={fieldInline}>
+        <span className={fieldName}>Photo</span>
+        <span className="inline-grid size-11 flex-1 place-items-center rounded-button bg-action p-0 text-on-card" aria-hidden="true">
           <CirclePlusIcon />
         </span>
-        <input type="file" accept="image/*" onChange={(e) => setNewPhoto(e.target.files?.[0] ?? null)} />
+        <input className="absolute mt-0 h-px w-px opacity-0" type="file" accept="image/*" onChange={(e) => setNewPhoto(e.target.files?.[0] ?? null)} />
       </label>
-      <div className="photo-preview">
-        {preview && <img src={preview} alt={newPhoto ? 'Nouvelle photo' : 'Photo actuelle'} />}
+      <div className="h-38.25 bg-photo-empty">
+        {preview && <img className="h-full w-full object-cover" src={preview} alt={newPhoto ? 'Nouvelle photo' : 'Photo actuelle'} />}
       </div>
       {photo && !newPhoto && (
-        <button type="button" className="text-button" onClick={() => setPhoto(null)}>
+        <button type="button" className="bg-transparent p-0 text-action underline" onClick={() => setPhoto(null)}>
           Retirer la photo
         </button>
       )}
