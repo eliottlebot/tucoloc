@@ -1,691 +1,159 @@
+/* Tailwind without Preflight: the screens rely on the browser's defaults (title sizes, paragraph margins). */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
 /* Design tokens, from the Figma mockups. */
-:root {
-  --background: #f0f0f0;
-  --card: #005ec7;
-  --highlight: #ffcf00;
-  --action: #e70000;
-  --free: #2cdb00;
-  --on-card: #ffffff;
-  --radius: 15px;
-  /* Titles and Tricount amounts. BBH Hegarty has no accented letters: the app writes and saves text without accents (see plain.ts). */
+@theme {
+  --color-background: #f0f0f0;
+  --color-card: #005ec7;
+  --color-highlight: #ffcf00;
+  --color-action: #e70000;
+  --color-free: #2cdb00;
+  --color-on-card: #ffffff;
+  --color-placeholder: #c3c3c3;
+  --color-photo-empty: #d9d9d9;
+
+  --radius-card: 15px;
+  --radius-photo: 14px;
+  --radius-button: 12px;
+  --radius-field: 10px;
+
+  /* Titles and Tricount amounts. BBH Hegarty has no accented letters: the app writes and saves text without accents (see plain.ts).
+     Its only weight is 400: use it through `display` (src/ui.ts), never a faked bold. */
   --font-display: 'BBH Hegarty', 'Arial Black', system-ui, sans-serif;
   /* Everything else: fields, labels, buttons, card text. */
-  --font: 'Outfit', system-ui, sans-serif;
-  --font-weight: 700;
-
-  color-scheme: light;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: var(--background);
-  color: var(--card);
-  font-family: var(--font);
-  font-weight: var(--font-weight);
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Mobile first; on a wide screen the app stays a phone-width column. */
-#root {
-  max-width: 420px;
-  min-height: 100dvh;
-  margin: 0 auto;
-  padding: 16px 16px 120px;
-}
-
-/* Big and medium titles keep the design font; so do the Tricount amounts. */
-h1,
-h2,
-.header-home,
-.meal-title,
-.recipe-title,
-.selection-dish,
-.selection-label-empty,
-.recipe-form .label-text,
-.balances td,
-.expense > p:not(.card-detail),
-.price {
-  font-family: var(--font-display);
-  /* Its only weight: never a faked bold. */
-  font-weight: 400;
-}
-
-h1,
-h2 {
-  color: var(--action);
-  font-weight: 400;
-  text-align: center;
-}
-
-h2 {
-  font-size: 30px;
-  margin: 32px 0 16px;
-}
-
-button {
-  font: inherit;
-  font-size: 18px;
-  color: var(--on-card);
-  background: var(--action);
-  border: none;
-  border-radius: 10px;
-  padding: 8px 14px;
-  cursor: pointer;
-}
-
-/* Icons sit as blocks: no baseline gap under them, so icon buttons center on their row. */
-button svg {
-  display: block;
-}
-
-button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-label {
-  display: block;
-  color: var(--action);
-  font-size: 22px;
-  margin: 12px 0;
-}
-
-input,
-select,
-textarea {
-  display: block;
-  width: 100%;
-  margin-top: 6px;
-  font: inherit;
-  font-size: 18px;
-  color: var(--card);
-  background: #ffffff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 12px;
-}
-
-input[type='checkbox'] {
-  display: inline;
-  width: auto;
-  margin-right: 8px;
-}
-
-fieldset {
-  border: none;
-  padding: 0;
-}
-
-legend {
-  color: var(--action);
-  font-size: 22px;
-}
-
-/* Form errors and refusals. */
-p[role='alert'] {
-  color: var(--action);
-}
-
-/* Header: logo and the Flatmate's name lead home; logout on the right. */
-.header {
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-.header-home {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: none;
-  color: var(--action);
-  font-size: 38px;
-  line-height: 1;
-  padding: 0;
-}
-
-.header-logout {
-  position: absolute;
-  top: 24px;
-  right: 0;
-  background: none;
-  color: var(--action);
-  padding: 0;
-}
-
-/* Bottom bar: the yellow buttons to the other screens, on every screen. */
-.bottom-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  justify-content: center;
-  gap: 22px;
-  padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
-  background: linear-gradient(transparent, var(--background) 30%);
-}
-
-.bottom-bar button {
-  width: 66px;
-  height: 66px;
-  display: grid;
-  place-items: center;
-  background: var(--highlight);
-  color: var(--card);
-  border-radius: var(--radius);
-  padding: 0;
-}
-
-/* Login: the logo above the app name. */
-.login-logo {
-  display: block;
-  margin: 48px auto 0;
-}
-
-/* Without connection: a Tuco and the message in the middle of the screen, over a veil.
-   Taps go through to the screen below, so a Flatmate can retry: the message only leaves once a call gets through. */
-.offline-banner {
-  position: fixed;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: rgb(240 240 240 / 0.85);
-  color: var(--action);
-  font-size: 22px;
-  text-align: center;
-  pointer-events: none;
-}
-
-/* The Tuco pictures have a white ground: shown as a white tile. */
-.offline-banner img {
-  display: block;
-  margin-bottom: 12px;
-}
-
-.offline-banner p {
-  margin: 0;
-  max-width: 320px;
-}
-
-.dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  background: rgb(0 0 0 / 0.4);
-}
-
-.dialog {
-  width: min(100%, 388px);
-  padding: 20px;
-  border-radius: var(--radius);
-  background: var(--card);
-  color: var(--on-card);
-  font-size: 20px;
-  text-align: center;
-}
-
-.dialog button + button {
-  margin-left: 12px;
-}
-
-/* Blue card, shared by every screen. */
-.card {
-  background: var(--card);
-  color: var(--on-card);
-  border-radius: var(--radius);
-  padding: 18px;
-}
-
-.card p {
-  margin: 0;
-}
-
-/* Home: tonight's Meal. */
-.meal-card {
-  display: flex;
-  align-items: stretch;
-  gap: 13px;
-  min-height: 136px;
-}
-
-.card .meal-empty {
-  align-self: center;
-  flex: 1;
-  text-align: center;
-  font-size: 20px;
-  color: var(--background);
-}
-
-.meal-photo {
-  flex: none;
-  width: 100px;
-  height: 100px;
-  border-radius: 14px;
-  object-fit: cover;
-  background: rgb(255 255 255 / 0.15);
-}
-
-.meal-details {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-
-.meal-title {
-  color: var(--highlight);
-  font-size: 24px;
-  overflow-wrap: anywhere;
-}
-
-.meal-chosen-by {
-  color: var(--background);
-  font-size: 18px;
-}
-
-.card .meal-nutrition {
-  margin-top: auto;
-  color: var(--background);
-  font-size: 16px;
-}
-
-/* Home: the two Rooms side by side; green icon when free, red when occupied. */
-.rooms {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: 170px;
-  align-items: center;
-  text-align: center;
-}
-
-.room {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.room button {
-  background: none;
-  padding: 0;
-  color: var(--free);
-}
-
-
-.room-occupied button {
-  color: var(--action);
-}
-
-.room-who {
-  font-size: 24px;
-  color: var(--background);
-}
-
-.room-since {
-  font-size: 20px;
-  color: var(--background);
-}
-
-.room p[role='alert'] {
-  margin-top: 6px;
-  font-size: 14px;
-  color: var(--highlight);
-}
-
-/* Red square buttons with a white icon: form and Recipe actions, the add button. */
-.action-button {
-  /* Square: never squeezed by a full-width field next to it. */
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border-radius: 12px;
-  background: var(--action);
-  color: var(--on-card);
-}
-
-/* Icon buttons inside a blue card. */
-.card-icon {
-  flex: none;
-  display: grid;
-  place-items: center;
-  background: none;
-  padding: 0;
-  color: var(--on-card);
-}
-
-/* The add button, bottom right of the column, above the bottom bar. */
-.fab {
-  position: fixed;
-  z-index: 1;
-  right: max(16px, calc(50vw - 210px + 16px));
-  bottom: calc(127px + env(safe-area-inset-bottom));
-}
-
-/* Close / save / edit / delete, top right of a form or a Recipe. */
-.screen-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  margin-top: 16px;
-}
-
-/* "Titre :" — the colon is decoration, not part of the field's name. */
-.label-text::after {
-  content: ' :';
-}
-
-.field-inline {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.field-inline .label-text {
-  flex: none;
-}
-
-.field-inline input,
-.field-inline select {
-  margin-top: 0;
-}
-
-.text-button {
-  background: none;
-  color: var(--action);
-  padding: 0;
-  text-decoration: underline;
-}
-
-/* Recettes: tonight's selection. */
-.selection,
-.selection-form {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.selection {
-  min-height: 81px;
-  padding: 11px 19px;
-}
-
-.selection-form {
-  flex: 1;
-}
-
-.selection-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.selection-label {
-  font-size: 20px;
-  color: var(--background);
-}
-
-.selection-label-empty {
-  font-size: 24px;
-  color: var(--highlight);
-}
-
-.selection-dish {
-  display: block;
-  font-size: 24px;
-  color: var(--highlight);
-  background: none;
-  padding: 0;
-  text-align: left;
-}
-
-.selection input {
-  height: 29px;
-  margin-top: 2px;
-  padding: 4px 9px;
-  border-radius: 12px;
-  font-size: 16px;
-}
-
-.selection input::placeholder {
-  color: #c3c3c3;
-}
-
-/* Recettes: the list. */
-.recipe-list,
-.card-list {
-  list-style: none;
-  margin: 17px 0 0;
-  padding: 0;
-}
-
-.recipe-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 17px;
-  padding: 14px 19px;
-}
-
-.recipe-open {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  grid-template-rows: auto 1fr;
-  column-gap: 13px;
-  padding: 0;
-  background: none;
-  color: inherit;
-  text-align: left;
-}
-
-.recipe-photo {
-  grid-row: span 2;
-  width: 100px;
-  height: 100px;
-  border-radius: 14px;
-  object-fit: cover;
-  background: rgb(255 255 255 / 0.15);
-}
-
-.recipe-title {
-  font-size: 24px;
-  color: var(--highlight);
-  overflow-wrap: anywhere;
-}
-
-.recipe-nutrition {
-  align-self: end;
-  font-size: 16px;
-  color: var(--background);
-}
-
-/* Recettes: one Recipe. */
-.recipe-view-photo {
-  display: block;
-  width: 100%;
-  border-radius: var(--radius);
-  object-fit: cover;
-}
-
-.recipe-view-nutrition,
-.recipe-view-creator {
-  font-size: 18px;
-}
-
-.recipe-view-text {
-  white-space: pre-wrap;
-  font-size: 18px;
-  line-height: 1.4;
-}
-
-/* Recettes: add or edit a Recipe. */
-.recipe-form label,
-.expense-form label {
-  font-size: 30px;
-}
-
-.recipe-form textarea {
-  height: 137px;
-}
-
-.photo-picker .action-button {
-  flex: 1;
-}
-
-.photo-picker input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-
-.photo-preview {
-  height: 153px;
-  background: #d9d9d9;
-}
-
-.photo-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Tricount: cards of 24px text, details smaller. */
-.card-list .card,
-.balances,
-.transfers {
-  margin-bottom: 17px;
-  font-size: 24px;
-}
-
-.card .card-detail {
-  margin-top: 6px;
-  font-size: 16px;
-}
-
-.card-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.balances {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.balances table {
-  flex: 1;
-  border-collapse: collapse;
-}
-
-.balances th,
-.balances td {
-  padding: 2px 0;
-  font-weight: inherit;
-  text-align: left;
-}
-
-.balances .owed {
-  color: var(--free);
-}
-
-.balances .owes {
-  color: var(--action);
-}
-
-/* Tricount: add or edit an Expense. */
-.expense-form select,
-.expense-form input[type='date'] {
-  font-size: 24px;
-  color: var(--card);
-}
-
-.expense-form select {
-  appearance: none;
-  padding-right: 36px;
-  background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23005EC7' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9L12 15L18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
-}
-
-.expense-form fieldset label {
-  display: flex;
-  align-items: center;
-  font-size: 24px;
-  margin: 6px 0;
-}
-
-/* Courses: the shared Shopping List. */
-.shopping-clear {
-  width: 100%;
-}
-
-.shopping-add {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.shopping-add input {
-  margin-top: 0;
-  font-size: 24px;
-}
-
-.shopping-add input::placeholder {
-  color: #c3c3c3;
-}
-
-.shopping-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding: 12px 10px;
-  border-radius: 12px;
-  background: var(--card);
-  color: var(--on-card);
-}
-
-.shopping-separator {
-  height: 3px;
-  margin: 4px 0 16px;
-  border-radius: 2px;
-  background: var(--card);
-}
-
-.shopping-item.bought .shopping-name {
-  text-decoration: line-through;
-}
-
-/* One line; a long name ends with an ellipsis. */
-.shopping-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 24px;
-  color: var(--on-card);
-  background: none;
-  padding: 0;
-  text-align: left;
+  --font-text: 'Outfit', system-ui, sans-serif;
+
+  /* Font sizes in px, named by their size; no line height, as in the mockups. */
+  --text-*: initial;
+  --text-14: 14px;
+  --text-16: 16px;
+  --text-18: 18px;
+  --text-20: 20px;
+  --text-22: 22px;
+  --text-24: 24px;
+  --text-30: 30px;
+  --text-38: 38px;
+}
+
+/* The default look of plain elements; components style themselves with utilities. */
+@layer base {
+  :root {
+    /* Outfit's weight, for all text but the titles. */
+    --font-weight: 700;
+    color-scheme: light;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-background);
+    color: var(--color-card);
+    font-family: var(--font-text);
+    font-weight: var(--font-weight);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Mobile first; on a wide screen the app stays a phone-width column. */
+  #root {
+    max-width: 420px;
+    min-height: 100dvh;
+    margin: 0 auto;
+    padding: 16px 16px 120px;
+  }
+
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    color: var(--color-action);
+    text-align: center;
+  }
+
+  h2 {
+    font-size: var(--text-30);
+    margin: 32px 0 16px;
+  }
+
+  button {
+    font: inherit;
+    font-size: var(--text-18);
+    color: var(--color-on-card);
+    background: var(--color-action);
+    border: none;
+    border-radius: var(--radius-field);
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+
+  /* Icons sit as blocks: no baseline gap under them, so icon buttons center on their row. */
+  button svg {
+    display: block;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  label {
+    display: block;
+    color: var(--color-action);
+    font-size: var(--text-22);
+    margin: 12px 0;
+  }
+
+  input,
+  select,
+  textarea {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    font: inherit;
+    font-size: var(--text-18);
+    color: var(--color-card);
+    background: var(--color-on-card);
+    border: none;
+    border-radius: var(--radius-field);
+    padding: 10px 12px;
+  }
+
+  input[type='checkbox'] {
+    display: inline;
+    width: auto;
+    margin-right: 8px;
+  }
+
+  /* A chevron instead of the system arrow. */
+  select {
+    appearance: none;
+    padding-right: 36px;
+    background: var(--color-on-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23005EC7' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9L12 15L18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+  }
+
+  fieldset {
+    border: none;
+    padding: 0;
+  }
+
+  legend {
+    color: var(--color-action);
+    font-size: var(--text-22);
+  }
+
+  /* Form errors and refusals. */
+  p[role='alert'] {
+    color: var(--color-action);
+  }
+
+  /* "Titre :" — the colon is decoration, not part of the field's name. */
+  .label-text::after {
+    content: ' :';
+  }
 }

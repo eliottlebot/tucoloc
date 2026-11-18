@@ -5,6 +5,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { CircleCheckIcon, CirclePlusIcon, CircleXIcon, PencilIcon, ScaleIcon } from './icons'
 import { plain } from './plain'
 import { useLive } from './useLive'
+import { actionButton, card, cardIcon, cardList, display, fab, fieldInline, screenActions } from './ui'
 
 /** "12,50 €"; with signDisplay 'exceptZero', "+12,50 €" and "-12,50 €". */
 const formatEuros = (cents: number, signDisplay: Intl.NumberFormatOptions['signDisplay'] = 'auto') =>
@@ -81,6 +82,14 @@ const latestFirst = (a: Settlement, b: Settlement) => b.createdAt.getTime() - a.
 const newestFirst = (a: Expense, b: Expense) =>
   b.date.localeCompare(a.date) || b.createdAt.getTime() - a.createdAt.getTime()
 
+/** A Tricount card: 24px text, details smaller. */
+const tricountCard = `${card} mb-4.25 text-24`
+const cardDetail = 'm-0 mt-1.5 text-16'
+const cardActions = 'mt-2 flex justify-end gap-1.5'
+
+/** An Expense's label and amount, date, payer: Tricount figures, in the title font. */
+const expenseLine = `${display} m-0`
+
 type Props = { backend: Backend; clock: Clock; me: Flatmate; flatmates: Flatmate[] | undefined }
 
 /** What the ConfirmDialog asks, and what confirming does. */
@@ -131,7 +140,7 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
         }
       />
       <h2>Depenses</h2>
-      <ul className="card-list">
+      <ul className={cardList}>
         {[...expenses].sort(newestFirst).map((e) => (
           <ExpenseItem
             key={e.id}
@@ -163,7 +172,7 @@ export function Expenses({ backend, clock, me, flatmates }: Props) {
           }
         />
       )}
-      <button className="action-button fab" aria-label="Ajouter une depense" onClick={() => setForm('new')}>
+      <button className={`${actionButton} ${fab}`} aria-label="Ajouter une depense" onClick={() => setForm('new')}>
         <CirclePlusIcon />
       </button>
       {confirming && (
@@ -194,29 +203,29 @@ function Balances({ expenses, flatmates, nameOf, onSettle }: BalancesProps) {
   const transfers = suggestedTransfers(perFlatmate)
   return (
     <>
-      <section aria-label="Soldes" className="card balances">
-        <table>
+      <section aria-label="Soldes" className={`${tricountCard} flex items-center gap-3`}>
+        <table className="flex-1 border-collapse">
           <tbody>
             {perFlatmate.map((b) => (
               <tr key={b.flatmateId}>
-                <th scope="row">{nameOf(b.flatmateId)}</th>
-                <td className={b.cents > 0 ? 'owed' : b.cents < 0 ? 'owes' : undefined}>{formatEuros(b.cents, 'exceptZero')}</td>
+                <th scope="row" className="px-0 py-0.5 text-left">{nameOf(b.flatmateId)}</th>
+                <td className={`px-0 py-0.5 text-left ${display} ${b.cents > 0 ? 'text-free' : b.cents < 0 ? 'text-action' : ''}`}>{formatEuros(b.cents, 'exceptZero')}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <button className="card-icon" aria-label="Enregistrer un reglement" disabled={transfers.length === 0} onClick={onSettle}>
+        <button className={cardIcon} aria-label="Enregistrer un reglement" disabled={transfers.length === 0} onClick={onSettle}>
           <ScaleIcon />
         </button>
       </section>
       <h2>Virements</h2>
-      <section aria-label="Virements" className="card transfers">
+      <section aria-label="Virements" className={tricountCard}>
         {transfers.length === 0 ? (
-          <p>Tout le monde est a jour.</p>
+          <p className="m-0">Tout le monde est a jour.</p>
         ) : (
           transfers.map((t) => (
-            <p key={t.fromId + t.toId}>
-              {nameOf(t.fromId)} doit <span className="price">{formatEuros(t.cents)}</span> a {nameOf(t.toId)}
+            <p key={t.fromId + t.toId} className="m-0">
+              {nameOf(t.fromId)} doit <span className={display}>{formatEuros(t.cents)}</span> a {nameOf(t.toId)}
             </p>
           ))
         )}
@@ -231,19 +240,19 @@ function SettlementHistory({ settlements, nameOf, onDelete }: HistoryProps) {
   return (
     <>
       <h2>Reglements</h2>
-      <ul className="card-list" aria-label="Reglements">
+      <ul className={cardList} aria-label="Reglements">
         {[...settlements].sort(latestFirst).map((s) => (
-          <li key={s.id} className="card">
+          <li key={s.id} className={tricountCard}>
             {s.transfers.map((t) => (
-              <p key={t.fromId + t.toId}>
-                {nameOf(t.fromId)} a paye <span className="price">{formatEuros(t.cents)}</span> a {nameOf(t.toId)}
+              <p key={t.fromId + t.toId} className="m-0">
+                {nameOf(t.fromId)} a paye <span className={display}>{formatEuros(t.cents)}</span> a {nameOf(t.toId)}
               </p>
             ))}
-            <p className="card-detail">
+            <p className={cardDetail}>
               <span>{formatDay(dayInParis(s.createdAt))}</span> · <span>Enregistre par {nameOf(s.creatorId)}</span>
             </p>
-            <div className="card-actions">
-              <button className="action-button" aria-label="Supprimer" onClick={() => onDelete(s)}>
+            <div className={cardActions}>
+              <button className={actionButton} aria-label="Supprimer" onClick={() => onDelete(s)}>
                 <CircleXIcon />
               </button>
             </div>
@@ -268,14 +277,14 @@ function ExpenseItem({ expense, flatmates, nameOf, settled, onEdit, onDelete }: 
   // Shown in the usual Flatmate order, whatever order the leftover cents followed.
   const shares = flatmates.flatMap((f) => split.filter((s) => s.flatmateId === f.id))
   return (
-    <li aria-label={expense.label} className="card expense">
-      <p>
+    <li aria-label={expense.label} className={tricountCard}>
+      <p className={expenseLine}>
         <span>{expense.label}</span> - <span>{formatEuros(expense.amountCents)}</span>
       </p>
-      <p>{formatDay(expense.date)}</p>
-      <p>Paye par {nameOf(expense.payerId)}</p>
-      <p className="card-detail">{shares.map((s) => `${nameOf(s.flatmateId)} ${formatEuros(s.cents)}`).join(' · ')}</p>
-      <p className="card-detail">
+      <p className={expenseLine}>{formatDay(expense.date)}</p>
+      <p className={expenseLine}>Paye par {nameOf(expense.payerId)}</p>
+      <p className={cardDetail}>{shares.map((s) => `${nameOf(s.flatmateId)} ${formatEuros(s.cents)}`).join(' · ')}</p>
+      <p className={cardDetail}>
         <span>Ajoutee par {nameOf(expense.creatorId)}</span>
         {settled && (
           <>
@@ -285,11 +294,11 @@ function ExpenseItem({ expense, flatmates, nameOf, settled, onEdit, onDelete }: 
         )}
       </p>
       {!settled && (
-        <div className="card-actions">
-          <button className="action-button" aria-label="Modifier" onClick={onEdit}>
+        <div className={cardActions}>
+          <button className={actionButton} aria-label="Modifier" onClick={onEdit}>
             <PencilIcon />
           </button>
-          <button className="action-button" aria-label="Supprimer" onClick={onDelete}>
+          <button className={actionButton} aria-label="Supprimer" onClick={onDelete}>
             <CircleXIcon />
           </button>
         </div>
@@ -335,27 +344,27 @@ function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormPro
   }
 
   return (
-    <form className="expense-form" onSubmit={submit}>
-      <div className="screen-actions">
-        <button type="button" className="action-button" aria-label="Annuler" onClick={onDone}>
+    <form onSubmit={submit}>
+      <div className={screenActions}>
+        <button type="button" className={actionButton} aria-label="Annuler" onClick={onDone}>
           <CircleXIcon />
         </button>
-        <button type="submit" className="action-button" aria-label="Enregistrer" disabled={saving}>
+        <button type="submit" className={actionButton} aria-label="Enregistrer" disabled={saving}>
           <CircleCheckIcon />
         </button>
       </div>
       <h2>{editing ? 'Modifier la depense' : 'Ajouter une depense'}</h2>
-      <label className="field-inline">
-        <span className="label-text">Titre</span>
-        <input value={label} onChange={(e) => setLabel(e.target.value)} />
+      <label className={fieldInline}>
+        <span className="label-text flex-none">Titre</span>
+        <input className="mt-0" value={label} onChange={(e) => setLabel(e.target.value)} />
       </label>
-      <label className="field-inline">
-        <span className="label-text">Prix</span>
-        <input inputMode="decimal" placeholder="0,00 €" value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <label className={fieldInline}>
+        <span className="label-text flex-none">Prix</span>
+        <input className="mt-0" inputMode="decimal" placeholder="0,00 €" value={amount} onChange={(e) => setAmount(e.target.value)} />
       </label>
-      <label className="field-inline">
-        <span className="label-text">Acheteur</span>
-        <select value={payerId} onChange={(e) => setPayerId(e.target.value)}>
+      <label className={fieldInline}>
+        <span className="label-text flex-none">Acheteur</span>
+        <select className="mt-0 text-24" value={payerId} onChange={(e) => setPayerId(e.target.value)}>
           {flatmates.map((f) => (
             <option key={f.id} value={f.id}>
               {f.name}
@@ -363,14 +372,14 @@ function ExpenseForm({ backend, clock, me, flatmates, editing, onDone }: FormPro
           ))}
         </select>
       </label>
-      <label className="field-inline">
-        <span className="label-text">Date</span>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+      <label className={fieldInline}>
+        <span className="label-text flex-none">Date</span>
+        <input className="mt-0 text-24" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </label>
       <fieldset>
         <legend>Participants</legend>
         {flatmates.map((f) => (
-          <label key={f.id}>
+          <label key={f.id} className="my-1.5 flex items-center text-24">
             <input type="checkbox" checked={participantIds.includes(f.id)} onChange={() => toggle(f.id)} />
             {f.name}
           </label>

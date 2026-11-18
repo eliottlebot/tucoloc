@@ -3,6 +3,7 @@ import type { Backend, Flatmate, Occupancy, RoomId } from './backend/Backend'
 import type { Clock } from './clock'
 import { BathIcon, ToiletIcon } from './icons'
 import { useLive } from './useLive'
+import { card } from './ui'
 
 const MINUTE = 60 * 1000
 
@@ -58,20 +59,21 @@ export function Rooms({ backend, clock, me, flatmates }: Props) {
   return (
     <section aria-label="Appartement">
       <h2>Appartement</h2>
-      <div className="card rooms">
+      <div className={`${card} grid min-h-42.5 grid-cols-2 items-center text-center`}>
         {ROOMS.map((room) => {
           const occupancy = current.find((o) => o.room === room.id)
           return (
-            <section key={room.id} aria-label={room.name} className={occupancy ? 'room room-occupied' : 'room'}>
+            <section key={room.id} aria-label={room.name} className="flex flex-col items-center justify-center">
               <button
+                className={`bg-transparent p-0 ${occupancy ? 'text-action' : 'text-free'}`}
                 aria-label={occupancy ? 'Je libere' : "J'occupe"}
                 onClick={() => (occupancy ? backend.free(room.id) : occupy(room))}
               >
                 <room.Icon />
               </button>
-              <p className="room-who">{occupancy ? nameOf(occupancy.flatmateId) : 'Libre'}</p>
-              {occupancy && <p className="room-since">{formatTime(occupancy.since)}</p>}
-              {refusal?.room === room.id && <p role="alert">{refusal.message}</p>}
+              <p className="m-0 text-24 text-background">{occupancy ? nameOf(occupancy.flatmateId) : 'Libre'}</p>
+              {occupancy && <p className="m-0 text-20 text-background">{formatTime(occupancy.since)}</p>}
+              {refusal?.room === room.id && <p role="alert" className="m-0 mt-1.5 text-14 text-highlight">{refusal.message}</p>}
             </section>
           )
         })}

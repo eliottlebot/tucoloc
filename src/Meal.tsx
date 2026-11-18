@@ -3,6 +3,7 @@ import type { Backend, Day, Flatmate, Meal, Recipe } from './backend/Backend'
 import type { Clock } from './clock'
 import { CircleMinusIcon, CirclePlusIcon } from './icons'
 import { plain } from './plain'
+import { card, cardIcon, display } from './ui'
 import { useLive } from './useLive'
 
 const parisParts = (moment: Date) =>
@@ -43,6 +44,9 @@ export function useTonightsMeal(backend: Backend, clock: Clock): Meal | null | u
   return end && now < end ? meal : null
 }
 
+/** The dish chosen tonight, yellow in the card. */
+const dish = `${display} block text-24 text-highlight`
+
 type Props = {
   backend: Backend
   clock: Clock
@@ -69,31 +73,37 @@ export function TonightsMeal({ backend, clock, me, meal, recipes, onOpenRecipe }
   }
 
   return (
-    <section aria-label="Selection du jour" className="card selection">
+    <section aria-label="Selection du jour" className={`${card} flex min-h-20.25 items-center gap-3 px-4.75 py-2.75`}>
       {meal ? (
         <>
-          <div className="selection-text">
-            <p className="selection-label">Selection du jour :</p>
+          <div className="min-w-0 flex-1">
+            <p className="m-0 text-20 text-background">Selection du jour :</p>
             {recipe ? (
-              <button className="selection-dish" onClick={() => onOpenRecipe(recipe.id)}>
+              <button className={`${dish} bg-transparent p-0 text-left`} onClick={() => onOpenRecipe(recipe.id)}>
                 {recipe.title}
               </button>
             ) : (
               // A Recipe not loaded yet shows no name until it arrives.
-              <p className="selection-dish">{meal.text}</p>
+              <p className={`${dish} m-0`}>{meal.text}</p>
             )}
           </div>
-          <button className="card-icon" aria-label="Effacer" onClick={() => backend.clearMeal()}>
+          <button className={cardIcon} aria-label="Effacer" onClick={() => backend.clearMeal()}>
             <CircleMinusIcon />
           </button>
         </>
       ) : (
-        <form className="selection-form" onSubmit={chooseText}>
-          <div className="selection-text">
-            <p className="selection-label selection-label-empty">Selection du jour :</p>
-            <input aria-label="Autre plat" placeholder="Vide" value={text} onChange={(e) => setText(e.target.value)} />
+        <form className="flex flex-1 items-center gap-3" onSubmit={chooseText}>
+          <div className="min-w-0 flex-1">
+            <p className={`${display} m-0 text-24 text-highlight`}>Selection du jour :</p>
+            <input
+              className="mt-0.5 h-7.25 rounded-button px-2.25 py-1 text-16 placeholder:text-placeholder"
+              aria-label="Autre plat"
+              placeholder="Vide"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
           </div>
-          <button type="submit" className="card-icon" aria-label="Choisir">
+          <button type="submit" className={cardIcon} aria-label="Choisir">
             <CirclePlusIcon />
           </button>
         </form>

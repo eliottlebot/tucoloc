@@ -3,6 +3,7 @@ import type { Clock } from './clock'
 import { useTonightsMeal } from './Meal'
 import { formatNutrition } from './Recipes'
 import { Rooms } from './Rooms'
+import { card, display, photoThumb } from './ui'
 import { useLive } from './useLive'
 
 type Props = { backend: Backend; clock: Clock; me: Flatmate; flatmates: Flatmate[] | undefined }
@@ -31,22 +32,22 @@ function TonightsMealCard({ backend, clock, flatmates }: MealProps) {
   return (
     <section aria-label="Recette du jour">
       <h2>Recette du jour</h2>
-      <div className="card meal-card">
+      <div className={`${card} flex min-h-34 items-stretch gap-3.25`}>
         {meal && title ? (
           <>
             {recipe?.photo?.url ? (
-              <img className="meal-photo" src={recipe.photo.url} alt={recipe.title} />
+              <img className={`${photoThumb} flex-none`} src={recipe.photo.url} alt={recipe.title} />
             ) : (
-              recipe && <div className="meal-photo" />
+              recipe && <div className={`${photoThumb} flex-none`} />
             )}
-            <div className="meal-details">
-              <p className="meal-title">{title}</p>
-              <p className="meal-chosen-by">Choisie par {chosenBy}</p>
-              {recipe && formatNutrition(recipe) && <p className="meal-nutrition">{formatNutrition(recipe)}</p>}
+            <div className="flex min-w-0 flex-1 flex-col">
+              <p className={`${display} m-0 text-24 wrap-anywhere text-highlight`}>{title}</p>
+              <p className="m-0 text-18 text-background">Choisie par {chosenBy}</p>
+              {recipe && formatNutrition(recipe) && <p className="m-0 mt-auto text-16 text-background">{formatNutrition(recipe)}</p>}
             </div>
           </>
         ) : (
-          <p className="meal-empty">Aucun plat choisi</p>
+          <p className="m-0 flex-1 self-center text-center text-20 text-background">Aucun plat choisi</p>
         )}
       </div>
     </section>

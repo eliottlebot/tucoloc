@@ -8,6 +8,7 @@ import { Recipes } from './Recipes'
 import { HouseIcon, LogOutIcon, SaladIcon, ScaleIcon, ScrollTextIcon } from './icons'
 import { ShoppingList } from './ShoppingList'
 import type { Clock } from './clock'
+import { display } from './ui'
 // Inlined in the bundle: without connection, a picture fetched from the server would not load either.
 import sadTuco from './assets/sad_tuco.png?inline'
 import pissedTuco from './assets/pissed_tuco.png?inline'
@@ -67,9 +68,12 @@ export function App({ backend: server, clock }: Props) {
 function OfflineBanner() {
   const [tuco] = useState(() => OFFLINE_TUCOS[Math.floor(Math.random() * OFFLINE_TUCOS.length)])
   return (
-    <div role="alert" className="offline-banner">
-      <img src={tuco.src} alt={tuco.alt} width={120} height={120} />
-      <p>broke ass don't got no signal</p>
+    <div
+      role="alert"
+      className="pointer-events-none fixed inset-0 z-2 flex flex-col items-center justify-center bg-background/85 p-4 text-center text-22 text-action"
+    >
+      <img className="mb-3 block" src={tuco.src} alt={tuco.alt} width={120} height={120} />
+      <p className="m-0 max-w-80">broke ass don't got no signal</p>
     </div>
   )
 }
@@ -94,7 +98,7 @@ function LoginScreen({ backend, initialError, onLogin }: LoginProps) {
 
   return (
     <form onSubmit={submit}>
-      <img className="login-logo" src="/logo.png" alt="" width={100} height={100} />
+      <img className="mx-auto mt-12 block" src="/logo.png" alt="" width={100} height={100} />
       <h1>Tucoloc</h1>
       <label>
         Email
@@ -110,6 +114,9 @@ function LoginScreen({ backend, initialError, onLogin }: LoginProps) {
   )
 }
 
+/** The yellow buttons to the other screens, in the bottom bar. */
+const navButton = 'grid size-16.5 place-items-center rounded-card bg-highlight p-0 text-card'
+
 /** The home screen (tonight's Meal, Rooms), and the other screens of the bottom bar: Tricount (Expenses), Recettes (Recipes), Courses (Shopping List). */
 type Screen = 'home' | 'expenses' | 'recipes' | 'shopping'
 
@@ -119,12 +126,16 @@ function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: 
   const me = flatmates?.find((f) => f.id === session.flatmate.id) ?? session.flatmate
   return (
     <>
-      <header className="header">
-        <button className="header-home" aria-label={`${me.name.toUpperCase()}, accueil`} onClick={() => setScreen('home')}>
+      <header className="relative flex justify-center">
+        <button
+          className={`${display} flex flex-col items-center bg-transparent p-0 text-38 leading-none text-action`}
+          aria-label={`${me.name.toUpperCase()}, accueil`}
+          onClick={() => setScreen('home')}
+        >
           <img src="/logo.png" alt="" width={50} height={50} />
           <span>{me.name.toUpperCase()}</span>
         </button>
-        <button className="header-logout" aria-label="Se deconnecter" onClick={onLogout}>
+        <button className="absolute top-6 right-0 bg-transparent p-0 text-action" aria-label="Se deconnecter" onClick={onLogout}>
           <LogOutIcon />
         </button>
       </header>
@@ -134,17 +145,20 @@ function Home({ backend, clock, session, onLogout }: { backend: Backend; clock: 
         {screen === 'recipes' && <Recipes backend={backend} clock={clock} me={me} flatmates={flatmates} />}
         {screen === 'shopping' && <ShoppingList backend={backend} clock={clock} />}
       </main>
-      <nav className="bottom-bar" aria-label="Navigation">
-        <button aria-label="Accueil" aria-current={screen === 'home'} onClick={() => setScreen('home')}>
+      <nav
+        className="fixed inset-x-0 bottom-0 flex justify-center gap-5.5 bg-[linear-gradient(transparent,var(--color-background)_30%)] pt-4 pb-[calc(16px_+_env(safe-area-inset-bottom))]"
+        aria-label="Navigation"
+      >
+        <button className={navButton} aria-label="Accueil" aria-current={screen === 'home'} onClick={() => setScreen('home')}>
           <HouseIcon />
         </button>
-        <button aria-label="Tricount" aria-current={screen === 'expenses'} onClick={() => setScreen('expenses')}>
+        <button className={navButton} aria-label="Tricount" aria-current={screen === 'expenses'} onClick={() => setScreen('expenses')}>
           <ScaleIcon />
         </button>
-        <button aria-label="Recettes" aria-current={screen === 'recipes'} onClick={() => setScreen('recipes')}>
+        <button className={navButton} aria-label="Recettes" aria-current={screen === 'recipes'} onClick={() => setScreen('recipes')}>
           <SaladIcon />
         </button>
-        <button aria-label="Courses" aria-current={screen === 'shopping'} onClick={() => setScreen('shopping')}>
+        <button className={navButton} aria-label="Courses" aria-current={screen === 'shopping'} onClick={() => setScreen('shopping')}>
           <ScrollTextIcon />
         </button>
       </nav>
