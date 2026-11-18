@@ -169,9 +169,9 @@ function LoginScreen({ backend, initialError, onLogin }: LoginProps) {
   );
 }
 
-/** The yellow buttons to the other screens, in the bottom bar. */
+/** The yellow buttons to the other screens, in the bottom bar. They shrink by 10% while pressed. */
 const navButton =
-  "grid size-16.5 place-items-center rounded-card bg-highlight p-0 text-card shadow-md";
+  "grid size-16.5 place-items-center rounded-card bg-highlight p-0 text-card shadow-md transition-[background-color,scale] hover:bg-highlight/80 active:scale-90 active:bg-highlight/60";
 
 /** The home screen (tonight's Meal, Rooms), and the other screens of the bottom bar: Tricount (Expenses), Recettes (Recipes), Courses (Shopping List). */
 type Screen = "home" | "expenses" | "recipes" | "shopping";
